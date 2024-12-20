@@ -22,7 +22,9 @@ const requireAuth = async (req, res, next) => {
     if (!admin) {
       return res.status(401).json({ error: "Request is not authorized" });
     }
-
+    if (admin.role !== "admin") {
+      return res.status(401).json({ error: "Request is not authorized" });
+    }
     req.admin = admin;
     next();
   } catch (error) {

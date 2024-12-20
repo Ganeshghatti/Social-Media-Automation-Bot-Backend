@@ -1,28 +1,33 @@
 const express = require("express");
-const connectdatabase = require("./config/database");
+const connectDatabase = require("./config/database");
 const cors = require("cors");
 const bodyParser = require("body-parser");
-const adminroutes = require("./routes/Admin");
+const adminRoutes = require("./routes/Admin");
 const dotenv = require("dotenv");
-const path = require("path");
-const transporter = require("./config/email");
-const { cronPublishPosts } = require("./api/cronPublishPosts");
-const { cronCreatePosts } = require("./api/cronCreatePosts");
+const { cronPublishPosts } = require("./cron/cronPublishPosts");
+const { cronCreatePosts } = require("./cron/cronCreatePosts");
 
-dotenv.config({ path: path.join(__dirname, "api", ".env") });
+dotenv.config();
+
 const app = express();
 
+// Middleware setup
 app.use(cors());
 app.use(express.json());
 app.use(bodyParser.json());
-app.use(adminroutes);
+app.use(adminRoutes);
 
+// Root route
 app.get("/", (req, res) => {
   res.send("Welcome to The Squirrel backend");
 });
 
-connectdatabase();
+connectDatabase();
 
 cronPublishPosts();
 
-module.exports = app;
+// Start the server
+const PORT = process.env.PORT || 5000; // Default to 5000 if PORT is not set
+const server = app.listen(PORT, () => {
+  console.log(`Server running at http://localhost:${PORT}`);
+});

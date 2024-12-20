@@ -8,6 +8,6 @@ const {
 } = require("../Controller/Admin");
 
 router.route("/admin/login").post(AdminLogin);
-router.route("/admin/get-all-posts").get(GetAllPosts);
+router.route("/admin/get-all-posts").get(requireAuth, GetAllPosts);
 
 module.exports = router;

@@ -3,8 +3,7 @@ const fs = require('fs/promises');
 const path = require('path');
 const dotenv = require("dotenv");
 
-const envpath = path.join(__dirname, "..", "api", ".env");
-dotenv.config({ path: envpath });
+dotenv.config(); // Updated to load from root directory
 
 const GenerateImage = async (prompt) => {
   try {
@@ -19,12 +18,13 @@ const GenerateImage = async (prompt) => {
       responseType: "arraybuffer",
     });
 
-    // Create images directory if it doesn't exist
-    const imagesDir = path.join(__dirname, "..", "images");
+    // Create today's date directory if it doesn't exist
+    const today = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
+    const imagesDir = path.join(__dirname, "..", "images", today);
     await fs.mkdir(imagesDir, { recursive: true });
 
     // Save the image
-    const filename = path.join(imagesDir, `generated-${Date.now()}.png`);
+    const filename = path.join(imagesDir, `imgname-${Date.now()}.png`);
     await fs.writeFile(filename, response.data);
 
     return filename;

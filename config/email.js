@@ -2,8 +2,7 @@ const nodemailer = require("nodemailer");
 const dotenv = require("dotenv");
 const path = require("path");
 
-const envpath = path.join(__dirname, "..", "api", ".env");
-dotenv.config({ path: envpath });
+dotenv.config(); // Updated to load from root directory
 
 const emailConfig = {
   host: process.env.SMTP_HOST,

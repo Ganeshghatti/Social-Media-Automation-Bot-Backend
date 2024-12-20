@@ -6,7 +6,7 @@ const NotifyPublishPost = async (post) => {
   try {
     await transporter.sendMail({
       from: process.env.SMTP_USER,
-      to: ["info@thesquirrel.site", "ganeshghatt6@gmail.com"],
+      to: ["info@thesquirrel.site", "ganeshghatti6@gmail.com"],
       subject: "Post Published Successfully - The Squirrel Bot",
       html: publishedPostEmailTemplate(post),
       attachments: [{
