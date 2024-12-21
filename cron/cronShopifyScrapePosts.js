@@ -140,7 +140,7 @@ const cronShopifyScrapePosts = async (time) => {
 
 module.exports = { cronShopifyScrapePosts };
 
-cron.schedule("18 20 * * *", () => {
+cron.schedule("21 20 * * *", () => {
   // Times are in IST (UTC+5:30)
   const time = [
     { publishedAt: [9, 0, 0, 0] },  // 9:00 AM IST

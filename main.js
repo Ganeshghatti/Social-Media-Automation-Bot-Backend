@@ -6,6 +6,8 @@ const adminRoutes = require("./routes/Admin");
 const dotenv = require("dotenv");
 const moment = require("moment");
 const momentTimezone = require("moment-timezone");
+const { cronPublishPosts } = require("./cron/cronPublishPosts");
+const { cronShopifyScrapePosts } = require("./cron/cronShopifyScrapePosts");
 
 const envFile = process.env.TWITTER_ENV;
 dotenv.config({ path: envFile });
