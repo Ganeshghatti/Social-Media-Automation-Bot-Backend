@@ -6,7 +6,7 @@ const {
   AdminLogin,
   GetAllPosts,
   InstantPost,
-} = require("../Controller/Admin");
+} = require("../controller/Admin");
 
 router.route("/admin/login").post(AdminLogin);
 router.route("/admin/get-all-posts").get(requireAuth, GetAllPosts);
