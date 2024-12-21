@@ -17,7 +17,7 @@ app.use(cors());
 app.use(express.json());
 app.use(bodyParser.json());
 app.use(adminRoutes);
-console.log(moment());
+
 // Root route
 app.get("/", (req, res) => {
   res.send("Welcome to The Squirrel backend");
