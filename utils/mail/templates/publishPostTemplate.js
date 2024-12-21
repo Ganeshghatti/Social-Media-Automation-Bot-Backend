@@ -37,7 +37,7 @@ const publishedPostEmailTemplate = (post) => {
             <p><strong>Content:</strong> ${post.text}</p>
             <p><strong>Published at:</strong> ${moment().format('MMMM Do YYYY, h:mm:ss a')}</p>
             <div class="content">
-              <img src="cid:${post.img.split('/').pop()}" alt="Published Image" class="image">
+              <img src="cid:postimage" alt="Published Image" class="image">
             </div>
           </div>
           <div class="footer">

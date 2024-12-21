@@ -12,7 +12,7 @@ const NotifyPublishPost = async (post) => {
       attachments: [{
         filename: path.basename(post.img),
         path: post.img,
-        cid: path.basename(post.img)
+        cid: 'postimage'
       }]
     });
     console.log('Publication notification email sent successfully');

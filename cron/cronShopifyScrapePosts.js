@@ -1,4 +1,3 @@
-const { TwitterApi } = require("twitter-api-v2");
 const cron = require("node-cron");
 const ShopifyScrape = require("../scraping/ShopifyScrape");
 const GenerateContent = require("../utils/GenerateContent");
@@ -6,19 +5,6 @@ const Post = require("../models/Posts");
 const moment = require("moment");
 const GenerateImage = require("../utils/GenerateImage");
 const NotifyCreatePost = require("../utils/mail/NotifyCreatePost");
-const dotenv = require("dotenv");
-
-const envFile = process.env.TWITTER_ENV;
-dotenv.config({ path: envFile });
-// Your Twitter API credentials
-const TwitterClient = new TwitterApi({
-  appKey: process.env.TWITTER_API_KEY,
-  appSecret: process.env.TWITTER_API_SECRET,
-  accessToken: process.env.TWITTER_ACCESS_TOKEN,
-  accessSecret: process.env.TWITTER_ACCESS_TOKEN_SECRET,
-});
-
-const rwClient = TwitterClient.readWrite;
 
 const cronShopifyScrapePosts = async (time) => {
   try {
@@ -75,8 +61,8 @@ const cronShopifyScrapePosts = async (time) => {
       console.log("Selected post:", selectedPost);
       console.log("Selection reason:", selection.reason);
 
-      // Generate Twitter post
-      const tweetPrompt = `
+      // Generate post content
+      const postPrompt = `
             You are a web developer and digital marketing expert who helps businesses grow online.
             Create an informative and engaging post based on this article: ${JSON.stringify(
               selectedPost
@@ -105,32 +91,29 @@ const cronShopifyScrapePosts = async (time) => {
             
             [Subtle CTA]
             
-            Return ONLY the tweet text, nothing else.
+            Return ONLY the post text, nothing else.
         `;
 
-      const tweetContent = await GenerateContent(tweetPrompt);
-      console.log("Generated tweet:", tweetContent, "end");
+      const postContent = await GenerateContent(postPrompt);
+      console.log("Generated post content:", postContent, "end");
 
       // Creative prompt for image generation
       const imagePrompt = `
-            Create a visually stunning image that captures the essence of ${tweetContent}. 
+            Create a visually stunning image that captures the essence of ${postContent}. 
             Ensure that the generated image does not contain any text. Keep one object in center and create clean background.
         `;
 
-      const tweetlimit = tweetContent.slice(0, 250);
       const imagePath = await GenerateImage(imagePrompt);
 
       if (!imagePath) {
         console.error("Image generation failed.");
         return;
       }
-      const mediaId = await TwitterClient.v1.uploadMedia(imagePath);
-      await rwClient.v2.tweet({
-        text: tweetlimit,
-        media: { media_ids: [mediaId] },
-      });
+      console.log("image created");
+      console.log("image path", imagePath);
 
       const publishTime = moment()
+        .add(1, 'days')
         .set({
           hour: t.publishedAt[0],
           minute: t.publishedAt[1],
@@ -139,7 +122,7 @@ const cronShopifyScrapePosts = async (time) => {
         })
         .toDate();
       const post = new Post({
-        text: tweetlimit,
+        text: postContent,
         tobePublishedAt: publishTime,
         isPublished: false,
         img: imagePath,
@@ -156,7 +139,7 @@ const cronShopifyScrapePosts = async (time) => {
 
 module.exports = { cronShopifyScrapePosts };
 
-cron.schedule("32 15 * * *", () => {
+cron.schedule("50 19 * * *", () => {
   const time = [{ publishedAt: [9, 0, 0, 0] }, { publishedAt: [21, 0, 0, 0] }];
   cronShopifyScrapePosts(time); // Pass the time variable here
 });

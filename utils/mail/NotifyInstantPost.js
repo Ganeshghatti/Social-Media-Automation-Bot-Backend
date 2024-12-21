@@ -12,7 +12,7 @@ const NotifyInstantPost = async (post) => {
       attachments: [{
         filename: path.basename(post.img),
         path: post.img,
-        cid: path.basename(post.img)
+        cid: 'postimage'
       }]
     });
     console.log('Instant post notification email sent successfully for post');

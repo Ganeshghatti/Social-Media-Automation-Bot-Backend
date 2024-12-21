@@ -26,12 +26,14 @@ const cronCreatePosts = async (hour, minute, second, millisecond) => {
         continue;
       }
 
-      const publishTime = moment().set({
-        hour: hour,
-        minute: minute,
-        second: second,
-        millisecond: millisecond
-      }).toDate();
+      const publishTime = moment()
+        .add(1, 'days')
+        .set({
+          hour: hour,
+          minute: minute,
+          second: second,
+          millisecond: millisecond
+        }).toDate();
 
       const post = new Post({
         text: content,
@@ -43,7 +45,6 @@ const cronCreatePosts = async (hour, minute, second, millisecond) => {
       await post.save();
       console.log(`Post created successfully, scheduled for ${moment(publishTime).format('MMMM Do YYYY, h:mm:ss a')}`);
       
-      // Send notification for each post individually
       await NotifyCreatePost(post);
     }
   } catch (error) {
@@ -52,8 +53,8 @@ const cronCreatePosts = async (hour, minute, second, millisecond) => {
 };
 
 // Schedule cron jobs
-cron.schedule("0 17 * * *", () => cronCreatePosts(9, 0, 0, 0));
-cron.schedule("0 18 * * *", () => cronCreatePosts(18, 0, 0, 0));
-cron.schedule("0 19 * * *", () => cronCreatePosts(19, 0, 0, 0));
+// cron.schedule("0 17 * * *", () => cronCreatePosts(9, 0, 0, 0));
+// cron.schedule("0 18 * * *", () => cronCreatePosts(18, 0, 0, 0));
+// cron.schedule("0 19 * * *", () => cronCreatePosts(19, 0, 0, 0));
 
 module.exports = { cronCreatePosts };

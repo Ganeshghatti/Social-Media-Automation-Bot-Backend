@@ -27,7 +27,7 @@ const createPostEmailTemplate = (post) => {
             <p><strong>Content:</strong> ${post.text}</p>
             <p><strong>Scheduled for:</strong> ${moment(post.tobePublishedAt).format('MMMM Do YYYY, h:mm:ss a')}</p>
             <div class="content">
-              <img src="cid:${post.img.split('/').pop()}" alt="Post Image" class="image">
+              <img src="cid:postimage" alt="Post Image" class="image">
             </div>
           </div>
           <div class="footer">
