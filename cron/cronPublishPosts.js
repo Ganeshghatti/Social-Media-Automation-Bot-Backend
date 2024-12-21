@@ -27,6 +27,12 @@ const cronPublishPosts = async () => {
     console.log(`Checking for posts to publish at ${currentDate.format('MMMM Do YYYY, h:mm:ss a')}`);
     console.log(`Found ${postsToPublish.length} posts to publish`);
     
+    if (postsToPublish.length > 0) {
+      const nextPostTime = moment(postsToPublish[0].tobePublishedAt);
+      const hoursLeft = nextPostTime.diff(currentDate, 'hours');
+      console.log(`Hours left until the next post to publish: ${hoursLeft}`);
+    }
+
     for (const post of postsToPublish) {
       try {
         console.log(`Publishing post scheduled for ${moment(post.tobePublishedAt).format('MMMM Do YYYY, h:mm:ss a')}`);
@@ -59,4 +65,6 @@ const cronPublishPosts = async () => {
 module.exports = { cronPublishPosts };
 
 // Run every minute to check for posts to publish
-cron.schedule('* * * * *', cronPublishPosts);
+cron.schedule('* * * * *', cronPublishPosts, {
+  timezone: "Asia/Kolkata"
+});

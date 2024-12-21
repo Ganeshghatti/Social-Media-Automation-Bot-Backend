@@ -113,6 +113,7 @@ const cronShopifyScrapePosts = async (time) => {
       console.log("image path", imagePath);
 
       const publishTime = moment()
+        .tz('Asia/Kolkata')
         .add(1, 'days')
         .set({
           hour: t.publishedAt[0],
@@ -140,6 +141,12 @@ const cronShopifyScrapePosts = async (time) => {
 module.exports = { cronShopifyScrapePosts };
 
 cron.schedule("0 20 * * *", () => {
-  const time = [{ publishedAt: [9, 0, 0, 0] }, { publishedAt: [21, 0, 0, 0] }];
-  cronShopifyScrapePosts(time); // Pass the time variable here
+  // Times are in IST (UTC+5:30)
+  const time = [
+    { publishedAt: [9, 0, 0, 0] },  // 9:00 AM IST
+    { publishedAt: [21, 0, 0, 0] }  // 9:00 PM IST
+  ];
+  cronShopifyScrapePosts(time);
+}, {
+  timezone: "Asia/Kolkata"
 });

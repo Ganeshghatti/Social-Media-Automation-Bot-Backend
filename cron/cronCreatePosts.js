@@ -27,6 +27,7 @@ const cronCreatePosts = async (hour, minute, second, millisecond) => {
       }
 
       const publishTime = moment()
+        .tz('Asia/Kolkata')
         .add(1, 'days')
         .set({
           hour: hour,
