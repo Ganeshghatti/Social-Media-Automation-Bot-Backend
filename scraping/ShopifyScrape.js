@@ -37,7 +37,12 @@ const ShopifyScrape = async () => {
     const browser = await puppeteer.launch({
       headless: true,
       defaultViewport: null,
-      args: ["--window-size=1920,1080"],
+      args: [
+        '--window-size=1920,1080',
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage'
+      ]
     });
 
     const page = await browser.newPage();
