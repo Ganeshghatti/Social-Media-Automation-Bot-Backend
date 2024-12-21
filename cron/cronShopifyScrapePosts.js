@@ -139,7 +139,7 @@ const cronShopifyScrapePosts = async (time) => {
 
 module.exports = { cronShopifyScrapePosts };
 
-cron.schedule("50 19 * * *", () => {
+cron.schedule("0 20 * * *", () => {
   const time = [{ publishedAt: [9, 0, 0, 0] }, { publishedAt: [21, 0, 0, 0] }];
   cronShopifyScrapePosts(time); // Pass the time variable here
 });
