@@ -23,7 +23,7 @@ const cronPublishPosts = async () => {
       },
       isPublished: false
     }).sort({ tobePublishedAt: 1 });
-
+    
     console.log(`Checking for posts to publish at ${currentDate.format('MMMM Do YYYY, h:mm:ss a')}`);
     console.log(`Found ${postsToPublish.length} posts to publish`);
     
@@ -31,6 +31,14 @@ const cronPublishPosts = async () => {
       const nextPostTime = moment(postsToPublish[0].tobePublishedAt);
       const hoursLeft = nextPostTime.diff(currentDate, 'hours');
       console.log(`Hours left until the next post to publish: ${hoursLeft}`);
+    }
+
+    // Randomly log a post from the Post model
+    const allPosts = await Post.find(); // Fetch all posts from the Post model
+    if (allPosts.length > 0) {
+      const randomIndex = Math.floor(Math.random() * allPosts.length);
+      console.log("Randomly selected post from Post model:", allPosts[randomIndex].tobePublishedAt);
+      console.log(currentDate.toDate());
     }
 
     for (const post of postsToPublish) {

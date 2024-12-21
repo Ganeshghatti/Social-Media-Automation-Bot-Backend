@@ -26,6 +26,7 @@ app.get("/", (req, res) => {
 });
 
 connectDatabase();
+cronPublishPosts();
 console.log(moment());
 // Set default timezone for the entire application
 momentTimezone.tz.setDefault("Asia/Kolkata");
