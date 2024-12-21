@@ -195,7 +195,7 @@ exports.InstantPost = async (req, res, next) => {
 
     const post = new postModel({
       text: tweetContent,
-      tobePublishedAt: moment().toDate(),
+      tobePublishedAt: moment().tz('Asia/Kolkata').toDate(),
       isPublished: true,
       img: imagePath,
     });

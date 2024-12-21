@@ -121,6 +121,7 @@ const cronShopifyScrapePosts = async (time) => {
           second: t.publishedAt[2],
           millisecond: t.publishedAt[3],
         })
+        .utcOffset('+05:30', true)
         .toDate();
       const post = new Post({
         text: postContent,
