@@ -19,25 +19,16 @@ const instantPostTemplate = (post) => {
           .content { margin: 15px 0; }
           .image { max-width: 100%; border-radius: 8px; }
           .footer { color: #666; margin-top: 20px; }
-          .instant-badge {
-            background-color: #1DA1F2;
-            color: white;
-            padding: 5px 10px;
-            border-radius: 4px;
-            display: inline-block;
-            margin-bottom: 10px;
-          }
         </style>
       </head>
       <body>
         <div class="container">
-          <h2 class="header">Instant Post Published</h2>
+          <h2 class="header">Instant Post Created</h2>
           <div class="post-card">
-            <div class="instant-badge">Instant</div>
             <p><strong>Content:</strong> ${post.text}</p>
             <p><strong>Published at:</strong> ${moment().format('MMMM Do YYYY, h:mm:ss a')}</p>
             <div class="content">
-              <img src="cid:${post.img.split('/').pop()}" alt="Published Image" class="image">
+              <img src="cid:${post.img.split('/').pop()}" alt="Post Image" class="image">
             </div>
           </div>
           <div class="footer">

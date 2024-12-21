@@ -1,4 +1,3 @@
-require("dotenv").config();
 const { TwitterApi } = require("twitter-api-v2");
 const cron = require("node-cron");
 const ShopifyScrape = require("../scraping/ShopifyScrape");
@@ -7,7 +6,10 @@ const Post = require("../models/Posts");
 const moment = require("moment");
 const GenerateImage = require("../utils/GenerateImage");
 const NotifyCreatePost = require("../utils/mail/NotifyCreatePost");
+const dotenv = require("dotenv");
 
+const envFile = process.env.TWITTER_ENV;
+dotenv.config({ path: envFile });
 // Your Twitter API credentials
 const TwitterClient = new TwitterApi({
   appKey: process.env.TWITTER_API_KEY,

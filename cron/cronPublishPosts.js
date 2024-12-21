@@ -51,7 +51,8 @@ const cronPublishPosts = async () => {
       }
     }
   } catch (error) {
-    console.error("Error in Publish Posts CronJob:", error.message);
+    console.log("Error in Publish Posts CronJob:", error);
+    await NotifyError(error.message, "cron Publish Posts");
   }
 };
 

@@ -3,7 +3,8 @@ const fs = require('fs/promises');
 const path = require('path');
 const dotenv = require("dotenv");
 
-dotenv.config(); // Updated to load from root directory
+const envFile = process.env.TWITTER_ENV;
+dotenv.config({ path: envFile });
 
 const GenerateImage = async (prompt) => {
   try {

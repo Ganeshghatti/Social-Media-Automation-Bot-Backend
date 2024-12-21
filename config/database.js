@@ -1,8 +1,8 @@
 const mongoose = require("mongoose");
 const dotenv = require("dotenv");
-const path = require("path");
 
-dotenv.config(); // Updated to load from root directory
+const envFile = process.env.TWITTER_ENV;
+dotenv.config({ path: envFile });
 
 const connectdatabase = async () => {
   try {

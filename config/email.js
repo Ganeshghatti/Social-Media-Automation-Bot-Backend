@@ -1,8 +1,8 @@
 const nodemailer = require("nodemailer");
 const dotenv = require("dotenv");
-const path = require("path");
 
-dotenv.config(); // Updated to load from root directory
+const envFile = process.env.TWITTER_ENV;
+dotenv.config({ path: envFile });
 
 const emailConfig = {
   host: process.env.SMTP_HOST,

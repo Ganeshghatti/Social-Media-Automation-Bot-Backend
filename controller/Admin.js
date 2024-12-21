@@ -5,14 +5,16 @@ const userModel = require("../models/User");
 const postModel = require("../models/Posts");
 const fs = require("fs");
 const moment = require("moment");
-require("dotenv").config();
 const { TwitterApi } = require("twitter-api-v2");
 const ShopifyScrape = require("../scraping/ShopifyScrape");
 const GenerateContent = require("../utils/GenerateContent");
 const GenerateImage = require("../utils/GenerateImage");
 const NotifyError = require("../utils/mail/NotifyError");
 const NotifyInstantPost = require("../utils/mail/NotifyInstantPost");
+const dotenv = require("dotenv");
 
+const envFile = process.env.TWITTER_ENV;
+dotenv.config({ path: envFile });
 // Your Twitter API credentials
 const TwitterClient = new TwitterApi({
   appKey: process.env.TWITTER_API_KEY,
@@ -202,6 +204,7 @@ exports.InstantPost = async (req, res, next) => {
     NotifyInstantPost(post);
   } catch (error) {
     NotifyError(`Error in Instant Post: ${error.message}`, "Instant Post");
+    console.log(error);
     res.status(500).json({
       error: "Failed to create post. Please try again later.",
     });

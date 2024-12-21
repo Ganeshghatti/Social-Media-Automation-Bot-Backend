@@ -1,5 +1,5 @@
 const transporter = require("../../config/email");
-const { instantPostTemplate } = require("./templates/instantPostTemplate");
+const instantPostTemplate = require("./templates/instantPostTemplate");
 const path = require("path");
 
 const NotifyInstantPost = async (post) => {

@@ -6,8 +6,10 @@ const adminRoutes = require("./routes/Admin");
 const dotenv = require("dotenv");
 const { cronPublishPosts } = require("./cron/cronPublishPosts");
 const { cronShopifyScrapePosts } = require("./cron/cronShopifyScrapePosts");
+const { cronCreatePosts } = require("./cron/cronCreatePosts");
 
-dotenv.config();
+const envFile = process.env.TWITTER_ENV;
+dotenv.config({ path: envFile });
 
 const app = express();
 
