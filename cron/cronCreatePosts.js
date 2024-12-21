@@ -52,7 +52,7 @@ const cronCreatePosts = async (hour, minute, second, millisecond) => {
 };
 
 // Schedule cron jobs
-cron.schedule("51 0 * * *", () => cronCreatePosts(0, 45, 0, 0));
+cron.schedule("0 17 * * *", () => cronCreatePosts(9, 0, 0, 0));
 cron.schedule("0 18 * * *", () => cronCreatePosts(18, 0, 0, 0));
 cron.schedule("0 19 * * *", () => cronCreatePosts(19, 0, 0, 0));
 

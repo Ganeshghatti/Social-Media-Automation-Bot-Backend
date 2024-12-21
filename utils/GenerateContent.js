@@ -13,12 +13,6 @@ const GenerateContent = async (prompt) => {
     const response = result.response.text();
     console.log("Response received");
 
-    if (response.length > 280) {
-      console.error(
-        "Generated content exceeds Twitter's character limit of 280 characters."
-      );
-      return;
-    }
     return response;
   } catch (error) {
     console.error("Error generating content:", error.message);

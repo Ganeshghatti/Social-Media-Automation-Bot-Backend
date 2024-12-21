@@ -30,10 +30,11 @@ const cronPublishPosts = async () => {
     for (const post of postsToPublish) {
       try {
         console.log(`Publishing post scheduled for ${moment(post.tobePublishedAt).format('MMMM Do YYYY, h:mm:ss a')}`);
-        
+        const tweetlimit = post.text.slice(0, 250);
+
         const mediaId = await TwitterClient.v1.uploadMedia(post.img);
         await rwClient.v2.tweet({
-          text: post.text,
+          text: tweetlimit,
           media: { media_ids: [mediaId] },
         });
 

@@ -25,6 +25,7 @@
     "mongoose": "^8.9.2",
     "node-cron": "^3.0.3",
     "nodemailer": "^6.9.16",
+    "puppeteer": "^23.11.1",
     "request": "^2.88.2",
     "twitter-api-v2": "^1.18.2",
     "validator": "^13.12.0"
