@@ -12,7 +12,7 @@ const NotifyCreatePost = async (post) => {
       attachments: [{
         filename: path.basename(post.img),
         path: post.img,
-        cid: path.basename(post.img)
+        cid: 'postimage'
       }]
     });
     console.log('Creation notification email sent successfully for post');

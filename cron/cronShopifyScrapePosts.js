@@ -99,7 +99,7 @@ const cronShopifyScrapePosts = async (time) => {
 
       // Creative prompt for image generation
       const imagePrompt = `
-            Create a visually stunning image that captures the essence of ${postContent}. 
+            Create a visually stunning image that captures the essence of ${selectedPost.title}. 
             Ensure that the generated image does not contain any text. Keep one object in center and create clean background.
         `;
 
@@ -141,7 +141,7 @@ const cronShopifyScrapePosts = async (time) => {
 
 module.exports = { cronShopifyScrapePosts };
 
-cron.schedule("22 21 * * *", () => {
+cron.schedule("0 16 * * *", () => {
   // Times are in IST (UTC+5:30)
   const time = [
     { publishedAt: [9, 0, 0, 0] },  // 9:00 AM IST

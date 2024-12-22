@@ -26,10 +26,10 @@ app.get("/", (req, res) => {
 });
 
 connectDatabase();
-cronPublishPosts();
-console.log(moment());
+
 // Set default timezone for the entire application
 momentTimezone.tz.setDefault("Asia/Kolkata");
+console.log(moment());
 
 // Start the server
 const PORT = process.env.PORT || 5000; // Default to 5000 if PORT is not set

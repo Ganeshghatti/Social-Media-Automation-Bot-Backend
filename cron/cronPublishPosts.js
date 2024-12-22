@@ -26,20 +26,6 @@ const cronPublishPosts = async () => {
     
     console.log(`Checking for posts to publish at ${currentDate.format('MMMM Do YYYY, h:mm:ss a')}`);
     console.log(`Found ${postsToPublish.length} posts to publish`);
-    
-    if (postsToPublish.length > 0) {
-      const nextPostTime = moment(postsToPublish[0].tobePublishedAt);
-      const hoursLeft = nextPostTime.diff(currentDate, 'hours');
-      console.log(`Hours left until the next post to publish: ${hoursLeft}`);
-    }
-
-    // Randomly log a post from the Post model
-    const allPosts = await Post.find(); // Fetch all posts from the Post model
-    if (allPosts.length > 0) {
-      const randomIndex = Math.floor(Math.random() * allPosts.length);
-      console.log("Randomly selected post from Post model:", allPosts[randomIndex].tobePublishedAt);
-      console.log(currentDate.toDate());
-    }
 
     for (const post of postsToPublish) {
       try {
@@ -57,11 +43,10 @@ const cronPublishPosts = async () => {
         
         console.log(`Tweet posted successfully at ${moment().format('MMMM Do YYYY, h:mm:ss a')}`);
         
-        // Send notification for each published post individually
         await NotifyPublishPost(post);
       } catch (error) {
+        await NotifyError(error.message, "cron Publish Posts");
         console.error(`Error publishing post: ${error.message}`);
-        continue; // Continue with next post if one fails
       }
     }
   } catch (error) {
