@@ -12,6 +12,7 @@ const GenerateImage = require("../utils/GenerateImage");
 const NotifyError = require("../utils/mail/NotifyError");
 const NotifyInstantPost = require("../utils/mail/NotifyInstantPost");
 const dotenv = require("dotenv");
+const path = require("path");
 
 const envFile = process.env.TWITTER_ENV;
 dotenv.config({ path: envFile });
@@ -68,13 +69,40 @@ exports.AdminLogin = async (req, res, next) => {
   }
 };
 
-exports.GetAllPosts = async (req, res, next) => {
+exports.GetAllPosts = async (req, res) => {
   try {
-    const posts = await postModel.find();
-    res.status(200).json(posts);
+    const posts = await postModel.find().sort({ createdAt: -1 });
+    
+    // Map through posts to add image data
+    const postsWithImages = await Promise.all(posts.map(async post => {
+      const postObj = post.toObject();
+      
+      try {
+        // Read the image file
+        const imageBuffer = fs.readFileSync(post.img);
+        // Convert to base64
+        const base64Image = imageBuffer.toString('base64');
+        // Get image type from file extension
+        const imageType = path.extname(post.img).slice(1);
+        // Create data URL
+        postObj.imageData = `data:image/${imageType};base64,${base64Image}`;
+      } catch (error) {
+        console.error(`Error reading image for post ${post._id}:`, error);
+        postObj.imageData = null;
+      }
+      
+      return postObj;
+    }));
+
+    res.status(200).json({
+      success: true,
+      posts: postsWithImages
+    });
   } catch (error) {
+    console.error("Error in GetAllPosts:", error);
     res.status(500).json({
-      error: "Failed to retrieve posts. Please try again later.",
+      success: false,
+      error: "Failed to fetch posts"
     });
   }
 };
