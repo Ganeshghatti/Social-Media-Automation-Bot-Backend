@@ -21,6 +21,8 @@
     "discord.js": "^14.16.3",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
+    "form-data": "^4.0.1",
+    "instagram-graph-api": "^7.0.0",
     "jsonwebtoken": "^9.0.2",
     "moment": "^2.30.1",
     "moment-timezone": "^0.5.46",
