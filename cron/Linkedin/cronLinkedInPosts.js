@@ -85,7 +85,7 @@ const cronLinkedInPosts = async (time) => {
 module.exports = { cronLinkedInPosts };
 
 cron.schedule(
-  "45 17 * * *",
+  "50 17 * * *",
   () => {
     // Times are in IST (UTC+5:30)
     const time = [
