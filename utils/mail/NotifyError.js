@@ -5,7 +5,7 @@ const NotifyError = async (error, source) => {
   try {
     await transporter.sendMail({
         from: process.env.SMTP_USER,
-        to: ["info@thesquirrel.site", "ganeshghatti6@gmail.com"],
+        to: ["info@thesquirrel.site", "ganeshghatti6@gmail.com","aasuy284@gmail.com"],
       subject: `Error Alert: ${source} - ${error}`,
       html: errorNotificationTemplate(error, source),
     });

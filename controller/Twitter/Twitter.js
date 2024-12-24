@@ -1,5 +1,4 @@
 const TwitterPost = require("../../models/TwitterPosts");
-const fs = require("fs");
 const moment = require("moment");
 const { TwitterApi } = require("twitter-api-v2");
 const ShopifyScrape = require("../../scraping/ShopifyScrape");
@@ -8,7 +7,8 @@ const GenerateImage = require("../../utils/Twitter/GenerateImage");
 const NotifyError = require("../../utils/mail/NotifyError");
 const NotifyInstantPost = require("../../utils/mail/NotifyInstantPost");
 const dotenv = require("dotenv");
-const path = require("path");
+const UploadImage = require("../../utils/cloud/UploadImage");
+const axios = require('axios');
 
 const envFile = process.env.SOCIAL_MEDIA_ENV;
 dotenv.config({ path: envFile });
@@ -26,27 +26,9 @@ exports.GetAllPosts = async (req, res) => {
   try {
     const posts = await TwitterPost.find().sort({ createdAt: -1 });
 
-    const postsWithImages = await Promise.all(
-      posts.map(async (post) => {
-        const postObj = post.toObject();
-
-        try {
-          const imageBuffer = fs.readFileSync(post.img);
-          const base64Image = imageBuffer.toString("base64");
-          const imageType = path.extname(post.img).slice(1);
-          postObj.imageData = `data:image/${imageType};base64,${base64Image}`;
-        } catch (error) {
-          console.error(`Error reading image for post ${post._id}:`, error);
-          postObj.imageData = null;
-        }
-
-        return postObj;
-      })
-    );
-
     res.status(200).json({
       success: true,
-      posts: postsWithImages,
+      posts,
     });
   } catch (error) {
     console.error("Error in GetAllPosts:", error);
@@ -159,13 +141,25 @@ exports.InstantPost = async (req, res, next) => {
         `;
 
     const tweetlimit = tweetContent.slice(0, 250);
-    const imagePath = await GenerateImage(imagePrompt);
-
-    if (!imagePath) {
+    const imageBuffer = await GenerateImage(imagePrompt);
+    if (!imageBuffer) {
       NotifyError("Image generation failed", "Instant Post");
       return;
     }
-    const mediaId = await TwitterClient.v1.uploadMedia(imagePath);
+    console.log("Image generated");
+    // Upload to Firebase
+    const fileName = `post-${Date.now()}.jpg`;
+    const imageUrl = await UploadImage(imageBuffer, fileName, "twitter");
+
+    // Download the image from Firebase URL
+    const imageResponse = await axios.get(imageUrl, { responseType: 'arraybuffer' });
+    const downloadedImageBuffer = imageResponse.data;
+
+    // Specify the media type when uploading to Twitter
+    const mediaId = await TwitterClient.v1.uploadMedia(downloadedImageBuffer, {
+      mimeType: 'image/jpeg'  // Specify the MIME type
+    });
+
     await rwClient.v2.tweet({
       text: tweetlimit,
       media: { media_ids: [mediaId] },
@@ -175,7 +169,7 @@ exports.InstantPost = async (req, res, next) => {
       text: tweetContent,
       tobePublishedAt: moment().tz("Asia/Kolkata").toDate(),
       isPublished: true,
-      img: imagePath,
+      img: imageUrl,
     });
 
     await post.save();
@@ -186,8 +180,9 @@ exports.InstantPost = async (req, res, next) => {
     });
   } catch (error) {
     NotifyError(`Error in Instant Post: ${error.message}`, "Instant Post");
-    console.log(error);
+    console.error(error);
     res.status(500).json({
+      success: false,
       error: "Failed to create post. Please try again later.",
     });
   }

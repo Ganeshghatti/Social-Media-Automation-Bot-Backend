@@ -25,12 +25,8 @@ const CreateImage = async (text) => {
 
     // Convert canvas to buffer (JPEG format)
     const buffer = canvas.toBuffer("image/jpeg", { quality: 0.9 });
-    
-    // Upload to Firebase and get URL
-    const fileName = `post-${Date.now()}.jpg`;
-    const imageUrl = await UploadImage(buffer, fileName, "instagram");
 
-    return imageUrl;
+    return buffer;
   } catch (error) {
     console.error("Error generating image:", error);
     throw error;

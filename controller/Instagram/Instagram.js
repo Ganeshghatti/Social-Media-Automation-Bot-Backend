@@ -9,6 +9,7 @@ const NotifyInstantPost = require("../../utils/mail/NotifyInstantPost");
 const dotenv = require("dotenv");
 const path = require("path");
 const axios = require("axios"); // Ensure axios is imported
+const UploadImage = require("../../utils/cloud/UploadImage");
 
 const envFile = process.env.SOCIAL_MEDIA_ENV;
 dotenv.config({ path: envFile });
@@ -23,25 +24,9 @@ exports.GetAllPosts = async (req, res) => {
   try {
     const posts = await InstagramPost.find().sort({ createdAt: -1 });
 
-    const postsWithImages = await Promise.all(
-      posts.map(async (post) => {
-        const postObj = post.toObject();
-        try {
-          const imageBuffer = await fs.readFile(post.img);
-          const base64Image = imageBuffer.toString("base64");
-          const imageType = path.extname(post.img).slice(1);
-          postObj.imageData = `data:image/${imageType};base64,${base64Image}`;
-        } catch (error) {
-          console.error(`Error reading image for post ${post._id}:`, error);
-          postObj.imageData = null;
-        }
-        return postObj;
-      })
-    );
-
     res.status(200).json({
       success: true,
-      posts: postsWithImages,
+      posts,
     });
   } catch (error) {
     console.error("Error in GetAllPosts:", error);
@@ -79,15 +64,18 @@ exports.InstantPost = async (req, res) => {
     }
     console.log("Caption generated successfully.");
 
-    const imageurl = await CreateImage(selectionResponse);
-    console.log("Image path generated:", imageurl);
-    if (!imageurl) {
+    const imageBuffer = await CreateImage(selectionResponse);
+    console.log("Image path generated:", imageBuffer);
+    if (!imageBuffer) {
       NotifyError("Image generation failed", "Instant Post");
       return res
         .status(500)
         .json({ success: false, message: "Image generation failed." });
     }
     console.log("Image generated successfully.");
+
+    const fileName = `post-${Date.now()}.jpg`;
+    const imageurl = await UploadImage(imageBuffer, fileName, "instagram");
 
     const containerResponse = await axios.post(
       `https://graph.facebook.com/${config.apiVersion}/${config.businessAccountId}/media`,
