@@ -64,7 +64,7 @@ const cronInstagramPosts = async (time) => {
 
       const publishTime = moment()
         .tz("Asia/Kolkata")
-        .add(1, "days")
+        // .add(1, "days")
         .set({
           hour: t.publishedAt[0],
           minute: t.publishedAt[1],
@@ -94,12 +94,12 @@ const cronInstagramPosts = async (time) => {
 module.exports = { cronInstagramPosts };
 
 cron.schedule(
-  "6 18 * * *",
+  "20 18 * * *",
   () => {
     // Times are in IST (UTC+5:30)
     const time = [
       { publishedAt: [9, 0, 0, 0] }, // 9:00 AM IST
-      { publishedAt: [6, 20, 0, 0] }, // 9:00 PM IST
+      { publishedAt: [6, 35, 0, 0] }, // 9:00 PM IST
     ];
     cronInstagramPosts(time);
   },
