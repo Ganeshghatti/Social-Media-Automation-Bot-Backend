@@ -42,7 +42,7 @@ exports.InstantPost = async (req, res) => {
     console.log("Starting...");
 
     const prompt =
-      "Write an Instagram post with title: importance of SEO, and 3-4 points about it.";
+      "Create an engaging Instagram post about the importance of SEO, highlighting its benefits in 3-4 concise points.";
     const selectionResponse = await GeneratePostContent(prompt);
     console.log("Raw Gemini response:", selectionResponse);
     if (!selectionResponse) {
@@ -52,8 +52,8 @@ exports.InstantPost = async (req, res) => {
         .json({ success: false, message: "Failed to generate post content." });
     }
     console.log("Post content generated successfully.");
-
-    const captionPrompt = `Write a good Instagram caption for the following post: ${selectionResponse}`;
+    
+    const captionPrompt = `Craft a catchy Instagram caption for this post: ${selectionResponse} Example format: [Catchy title or hook] [hashtags] [call to action] Return ONLY the caption text, nothing else.`;
     const caption = await GenerateCaption(captionPrompt);
     console.log("Generated caption:", caption);
     if (!caption) {
