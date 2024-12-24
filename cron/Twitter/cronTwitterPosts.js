@@ -1,10 +1,17 @@
 const cron = require("node-cron");
 const ShopifyScrape = require("../../scraping/ShopifyScrape");
-const GenerateContent = require("../../utils/GenerateContent");
-const Post = require("../../models/TwitterPosts");
+const GeneratePostContent = require("../../utils/Twitter/GeneratePostContent");
+const TwitterPost = require("../../models/TwitterPosts");
 const moment = require("moment");
 const GenerateImage = require("../../utils/Twitter/GenerateImage");
 const NotifyCreatePost = require("../../utils/mail/NotifyCreatePost");
+const axios = require("axios");
+const UploadImage = require("../../utils/cloud/UploadImage");
+const NotifyError = require("../../utils/mail/NotifyError");
+const dotenv = require("dotenv");
+
+const envFile = process.env.SOCIAL_MEDIA_ENV;
+dotenv.config({ path: envFile });
 
 const cronTwitterPosts = async (time) => {
   try {
@@ -37,7 +44,7 @@ const cronTwitterPosts = async (time) => {
         `;
 
       console.log("Generating content selection...");
-      const selectionResponse = await GenerateContent(selectionPrompt);
+      const selectionResponse = await GeneratePostContent(selectionPrompt);
       console.log("Raw Gemini response:", selectionResponse);
 
       let selection;
@@ -53,6 +60,7 @@ const cronTwitterPosts = async (time) => {
         }
       } catch (error) {
         console.error("Error parsing Gemini response:", error);
+        await NotifyError("Error parsing selection response: " + error.message, "cron Twitter Posts");
         return;
       }
 
@@ -93,8 +101,13 @@ const cronTwitterPosts = async (time) => {
             Return ONLY the post text, nothing else.
         `;
 
-      const postContent = await GenerateContent(postPrompt);
-      console.log("Generated post content:", postContent, "end");
+      const postContent = await GeneratePostContent(postPrompt);
+      if (!postContent) {
+        console.error("Post content generation failed.");
+        await NotifyError("Post content generation failed.", "cron Twitter Posts");
+        return;
+      }
+      console.log("Generated post content successfully.");
 
       // Creative prompt for image generation
       const imagePrompt = `
@@ -102,15 +115,18 @@ const cronTwitterPosts = async (time) => {
             Ensure that the generated image does not contain any text. Keep one object in center and create clean background.
         `;
 
-      const imagePath = await GenerateImage(imagePrompt);
+      const imageBuffer = await GenerateImage(imagePrompt);
 
-      if (!imagePath) {
+      if (!imageBuffer) {
         console.error("Image generation failed.");
+        await NotifyError("Image generation failed.", "cron Twitter Posts");
         return;
       }
-      console.log("image created");
-      console.log("image path", imagePath);
+      console.log("Image created successfully.");
 
+      const fileName = `post-${Date.now()}.jpg`;
+      const imageUrl = await UploadImage(imageBuffer, fileName, "twitter");
+  
       const publishTime = moment()
         .tz('Asia/Kolkata')
         .add(1, 'days')
@@ -122,29 +138,32 @@ const cronTwitterPosts = async (time) => {
         })
         .utcOffset('+05:30', true)
         .toDate();
-      const post = new Post({
+
+      console.log("Publish time set to:", publishTime);
+      const post = new TwitterPost({
         text: postContent,
         tobePublishedAt: publishTime,
         isPublished: false,
-        img: imagePath,
+        img: imageUrl,
       });
 
       await post.save();
+      console.log("Post saved successfully:", post);
       NotifyCreatePost(post);
     }
   } catch (error) {
     console.error("Error in Shopify Scrape Posts:", error.message);
-    await NotifyError(error.message, "cron Shopify Scrape Posts");
+    await NotifyError("Error in Shopify Scrape Posts: " + error.message, "cron Twitter Posts");
   }
 };
 
 module.exports = { cronTwitterPosts };
 
-cron.schedule("0 16 * * *", () => {
+cron.schedule("40 17 * * *", () => {
   // Times are in IST (UTC+5:30)
   const time = [
     { publishedAt: [9, 0, 0, 0] },  // 9:00 AM IST
-    { publishedAt: [21, 0, 0, 0] }  // 9:00 PM IST
+    { publishedAt: [18, 0, 0, 0] }  // 9:00 PM IST
   ];
   cronTwitterPosts(time);
 }, {

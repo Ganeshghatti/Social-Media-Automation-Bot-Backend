@@ -6,7 +6,6 @@ const NotifyInstantPost = require("../../utils/mail/NotifyInstantPost");
 const dotenv = require("dotenv");
 const credentials = require("../../linkedin-credentials.json");
 const axios = require("axios");
-const path = require("path");
 
 const envFile = process.env.SOCIAL_MEDIA_ENV;
 dotenv.config({ path: envFile });
