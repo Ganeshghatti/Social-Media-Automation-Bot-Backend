@@ -159,7 +159,7 @@ const cronTwitterPosts = async (time) => {
 
 module.exports = { cronTwitterPosts };
 
-cron.schedule("45 17 * * *", () => {
+cron.schedule("50 17 * * *", () => {
   // Times are in IST (UTC+5:30)
   const time = [
     { publishedAt: [9, 0, 0, 0] },  // 9:00 AM IST
