@@ -94,12 +94,12 @@ const cronInstagramPosts = async (time) => {
 module.exports = { cronInstagramPosts };
 
 cron.schedule(
-  "55 17 * * *",
+  "6 18 * * *",
   () => {
     // Times are in IST (UTC+5:30)
     const time = [
       { publishedAt: [9, 0, 0, 0] }, // 9:00 AM IST
-      { publishedAt: [6, 10, 0, 0] }, // 9:00 PM IST
+      { publishedAt: [6, 20, 0, 0] }, // 9:00 PM IST
     ];
     cronInstagramPosts(time);
   },
