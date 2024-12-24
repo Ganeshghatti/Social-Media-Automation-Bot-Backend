@@ -1,14 +1,13 @@
 const cron = require("node-cron");
-const ShopifyScrape = require("../scraping/ShopifyScrape");
-const GenerateContent = require("../utils/GenerateContent");
-const Post = require("../models/Posts");
+const ShopifyScrape = require("../../scraping/ShopifyScrape");
+const GenerateContent = require("../../utils/GenerateContent");
+const Post = require("../../models/TwitterPosts");
 const moment = require("moment");
-const GenerateImage = require("../utils/GenerateImage");
-const NotifyCreatePost = require("../utils/mail/NotifyCreatePost");
+const GenerateImage = require("../../utils/Twitter/GenerateImage");
+const NotifyCreatePost = require("../../utils/mail/NotifyCreatePost");
 
-const cronShopifyScrapePosts = async (time) => {
+const cronTwitterPosts = async (time) => {
   try {
-    console.log(time);
     for (const t of time) {
       console.log("Starting Shopify blog scraping cron job...");
       const blogPosts = await ShopifyScrape();
@@ -139,7 +138,7 @@ const cronShopifyScrapePosts = async (time) => {
   }
 };
 
-module.exports = { cronShopifyScrapePosts };
+module.exports = { cronTwitterPosts };
 
 cron.schedule("0 16 * * *", () => {
   // Times are in IST (UTC+5:30)
@@ -147,7 +146,7 @@ cron.schedule("0 16 * * *", () => {
     { publishedAt: [9, 0, 0, 0] },  // 9:00 AM IST
     { publishedAt: [21, 0, 0, 0] }  // 9:00 PM IST
   ];
-  cronShopifyScrapePosts(time);
+  cronTwitterPosts(time);
 }, {
   timezone: "Asia/Kolkata"
 });

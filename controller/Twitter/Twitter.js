@@ -1,22 +1,18 @@
-const validator = require("validator");
-const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
-const userModel = require("../models/User");
-const postModel = require("../models/Posts");
+const TwitterPost = require("../../models/TwitterPosts");
 const fs = require("fs");
 const moment = require("moment");
 const { TwitterApi } = require("twitter-api-v2");
-const ShopifyScrape = require("../scraping/ShopifyScrape");
-const GenerateContent = require("../utils/GenerateContent");
-const GenerateImage = require("../utils/GenerateImage");
-const NotifyError = require("../utils/mail/NotifyError");
-const NotifyInstantPost = require("../utils/mail/NotifyInstantPost");
+const ShopifyScrape = require("../../scraping/ShopifyScrape");
+const GeneratePostContent = require("../../utils/Twitter/GeneratePostContent");
+const GenerateImage = require("../../utils/Twitter/GenerateImage");
+const NotifyError = require("../../utils/mail/NotifyError");
+const NotifyInstantPost = require("../../utils/mail/NotifyInstantPost");
 const dotenv = require("dotenv");
 const path = require("path");
 
-const envFile = process.env.TWITTER_ENV;
+const envFile = process.env.SOCIAL_MEDIA_ENV;
 dotenv.config({ path: envFile });
-// Your Twitter API credentials
+
 const TwitterClient = new TwitterApi({
   appKey: process.env.TWITTER_API_KEY,
   appSecret: process.env.TWITTER_API_SECRET,
@@ -26,83 +22,37 @@ const TwitterClient = new TwitterApi({
 
 const rwClient = TwitterClient.readWrite;
 
-exports.AdminLogin = async (req, res, next) => {
-  const { email, password } = req.body;
-
+exports.GetAllPosts = async (req, res) => {
   try {
-    // Validate email
-    if (!email || !validator.isEmail(email)) {
-      return res.status(400).json({
-        error: "Please provide a valid email address.",
-      });
-    }
+    const posts = await TwitterPost.find().sort({ createdAt: -1 });
 
-    const admin = await userModel.findOne({ email });
+    const postsWithImages = await Promise.all(
+      posts.map(async (post) => {
+        const postObj = post.toObject();
 
-    if (!admin) {
-      return res.status(401).json({
-        error: "Invalid email or password.",
-      });
-    }
+        try {
+          const imageBuffer = fs.readFileSync(post.img);
+          const base64Image = imageBuffer.toString("base64");
+          const imageType = path.extname(post.img).slice(1);
+          postObj.imageData = `data:image/${imageType};base64,${base64Image}`;
+        } catch (error) {
+          console.error(`Error reading image for post ${post._id}:`, error);
+          postObj.imageData = null;
+        }
 
-    const match = await bcrypt.compare(password, admin.password);
-    if (!match) {
-      return res.status(401).json({
-        error: "Invalid email or password.",
-      });
-    }
-
-    const token = jwt.sign(
-      { userId: admin._id, email: admin.email },
-      process.env.ADMINJWTSECRET
+        return postObj;
+      })
     );
 
     res.status(200).json({
-      message: "Login successful.",
-      token: token,
-    });
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({
-      error: "An internal server error occurred. Please try again later.",
-    });
-  }
-};
-
-exports.GetAllPosts = async (req, res) => {
-  try {
-    const posts = await postModel.find().sort({ createdAt: -1 });
-    
-    // Map through posts to add image data
-    const postsWithImages = await Promise.all(posts.map(async post => {
-      const postObj = post.toObject();
-      
-      try {
-        // Read the image file
-        const imageBuffer = fs.readFileSync(post.img);
-        // Convert to base64
-        const base64Image = imageBuffer.toString('base64');
-        // Get image type from file extension
-        const imageType = path.extname(post.img).slice(1);
-        // Create data URL
-        postObj.imageData = `data:image/${imageType};base64,${base64Image}`;
-      } catch (error) {
-        console.error(`Error reading image for post ${post._id}:`, error);
-        postObj.imageData = null;
-      }
-      
-      return postObj;
-    }));
-
-    res.status(200).json({
       success: true,
-      posts: postsWithImages
+      posts: postsWithImages,
     });
   } catch (error) {
     console.error("Error in GetAllPosts:", error);
     res.status(500).json({
       success: false,
-      error: "Failed to fetch posts"
+      error: "Failed to fetch posts",
     });
   }
 };
@@ -134,7 +84,7 @@ exports.InstantPost = async (req, res, next) => {
             }
         `;
 
-    const selectionResponse = await GenerateContent(selectionPrompt);
+    const selectionResponse = await GeneratePostContent(selectionPrompt);
     console.log("Raw Gemini response:", selectionResponse);
     if (!selectionResponse) {
       NotifyError("Error in Shortlist posts", "Instant Post");
@@ -195,7 +145,7 @@ exports.InstantPost = async (req, res, next) => {
             Return ONLY the tweet text, nothing else.
         `;
 
-    const tweetContent = await GenerateContent(tweetPrompt);
+    const tweetContent = await GeneratePostContent(tweetPrompt);
     console.log("Generated tweet:", tweetContent);
     if (!tweetContent) {
       NotifyError("Error in Generate tweet", "Instant Post");
@@ -221,15 +171,19 @@ exports.InstantPost = async (req, res, next) => {
       media: { media_ids: [mediaId] },
     });
 
-    const post = new postModel({
+    const post = new TwitterPost({
       text: tweetContent,
-      tobePublishedAt: moment().tz('Asia/Kolkata').toDate(),
+      tobePublishedAt: moment().tz("Asia/Kolkata").toDate(),
       isPublished: true,
       img: imagePath,
     });
 
     await post.save();
     NotifyInstantPost(post);
+    return res.status(200).json({
+      success: true,
+      message: "Post created successfully",
+    });
   } catch (error) {
     NotifyError(`Error in Instant Post: ${error.message}`, "Instant Post");
     console.log(error);

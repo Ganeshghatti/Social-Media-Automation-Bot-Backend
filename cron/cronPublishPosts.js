@@ -1,7 +1,7 @@
 const { TwitterApi } = require("twitter-api-v2");
 const cron = require("node-cron");
 const moment = require("moment");
-const Post = require("../models/Posts");
+const TwitterPosts = require("../models/TwitterPosts");
 const NotifyPublishPost = require("../utils/mail/NotifyPublishPost");
 
 const TwitterClient = new TwitterApi({
@@ -17,7 +17,7 @@ const cronPublishPosts = async () => {
   try {
     const currentDate = moment();
     
-    const postsToPublish = await Post.find({
+    const postsToPublish = await TwitterPosts.find({
       tobePublishedAt: {
         $lte: currentDate.toDate()
       },
