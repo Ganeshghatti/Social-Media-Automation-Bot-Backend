@@ -10,6 +10,8 @@ const dotenv = require("dotenv");
 const moment = require("moment");
 const momentTimezone = require("moment-timezone");
 const { cronPublishPosts } = require("./cron/cronPublishPosts");
+const { cronInstagramPosts } = require("./cron/Instagram/cronInstagramPosts");
+const { cronTwitterPosts } = require("./cron/Twitter/cronTwitterPosts");
 
 const envFile = process.env.SOCIAL_MEDIA_ENV;
 dotenv.config({ path: envFile });
