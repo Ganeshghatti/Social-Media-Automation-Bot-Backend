@@ -310,9 +310,8 @@ exports.CreatePost = async (req, res) => {
 
 exports.GetAllPosts = async (req, res) => {
   try {
-    const posts = await TwitterPost.find().sort({ tobePublishedAt: 1 });
+    const posts = await TwitterPost.find().sort({ tobePublishedAt: -1 });
     
-    // Group posts by date
     const groupedPosts = posts.reduce((acc, post) => {
       const date = moment(post.tobePublishedAt).format('YYYY-MM-DD');
       
@@ -328,6 +327,9 @@ exports.GetAllPosts = async (req, res) => {
       
       return acc;
     }, []);
+
+    // Sort the grouped array by date in descending order
+    groupedPosts.sort((a, b) => moment(b.date).diff(moment(a.date)));
 
     res.status(200).json({
       success: true,

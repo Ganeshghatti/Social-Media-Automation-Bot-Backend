@@ -323,7 +323,7 @@ exports.CreatePost = async (req, res) => {
 
 exports.GetAllPosts = async (req, res) => {
   try {
-    const posts = await LinkedInPost.find().sort({ tobePublishedAt: 1 });
+    const posts = await LinkedInPost.find().sort({ tobePublishedAt: -1 });
     
     const groupedPosts = posts.reduce((acc, post) => {
       const date = moment(post.tobePublishedAt).format('YYYY-MM-DD');
@@ -340,6 +340,8 @@ exports.GetAllPosts = async (req, res) => {
       
       return acc;
     }, []);
+
+    groupedPosts.sort((a, b) => moment(b.date).diff(moment(a.date)));
 
     res.status(200).json({
       success: true,
