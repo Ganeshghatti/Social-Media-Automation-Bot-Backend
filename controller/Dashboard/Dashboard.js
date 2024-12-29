@@ -138,6 +138,36 @@ exports.GetDashboardStats = async (req, res) => {
       };
     }
 
+    const todayScheduledPosts = [
+      ...(await TwitterPosts.find({
+        tobePublishedAt: {
+          $gte: today.toDate(),
+          $lte: moment().endOf('day').toDate()
+        },
+        isPublished: false
+      }).select('text tobePublishedAt status img').lean().then(posts => 
+        posts.map(post => ({...post, platform: 'twitter'}))
+      )),
+      ...(await InstagramPosts.find({
+        tobePublishedAt: {
+          $gte: today.toDate(),
+          $lte: moment().endOf('day').toDate()
+        },
+        isPublished: false
+      }).select('text tobePublishedAt status img').lean().then(posts => 
+        posts.map(post => ({...post, platform: 'instagram'}))
+      )),
+      ...(await LinkedinPosts.find({
+        tobePublishedAt: {
+          $gte: today.toDate(),
+          $lte: moment().endOf('day').toDate()
+        },
+        isPublished: false
+      }).select('text tobePublishedAt status img').lean().then(posts => 
+        posts.map(post => ({...post, platform: 'linkedin'}))
+      ))
+    ].sort((a, b) => moment(a.tobePublishedAt).diff(moment(b.tobePublishedAt)));
+
     const dashboardStats = {
       today: {
         totalPosts: todayTwitterPosts.length + todayInstagramPosts.length + todayLinkedinPosts.length,
@@ -174,7 +204,8 @@ exports.GetDashboardStats = async (req, res) => {
           instagram: 0, // Placeholder for total Instagram posts
           linkedin: 0 // Placeholder for total Linkedin posts
         }
-      }
+      },
+      scheduledToday: todayScheduledPosts
     };
 
     res.status(200).json({
