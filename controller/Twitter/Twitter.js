@@ -310,17 +310,34 @@ exports.CreatePost = async (req, res) => {
 
 exports.GetAllPosts = async (req, res) => {
   try {
-    const posts = await TwitterPost.find().sort({ createdAt: -1 });
+    const posts = await TwitterPost.find().sort({ tobePublishedAt: 1 });
+    
+    // Group posts by date
+    const groupedPosts = posts.reduce((acc, post) => {
+      const date = moment(post.tobePublishedAt).format('YYYY-MM-DD');
+      
+      const existingGroup = acc.find(group => group.date === date);
+      if (existingGroup) {
+        existingGroup.posts.push(post);
+      } else {
+        acc.push({
+          date: date,
+          posts: [post]
+        });
+      }
+      
+      return acc;
+    }, []);
 
     res.status(200).json({
       success: true,
-      posts,
+      data: groupedPosts
     });
   } catch (error) {
-    console.error("Error in GetAllPosts:", error);
+    console.error(error);
     res.status(500).json({
       success: false,
-      error: "Failed to fetch posts",
+      error: "Failed to fetch posts"
     });
   }
 };
