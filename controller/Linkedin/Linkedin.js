@@ -166,106 +166,6 @@ exports.InstantPost = async (req, res, next) => {
   }
 };
 
-exports.GetAllPosts = async (req, res) => {
-  try {
-    const posts = await LinkedInPost.find().sort({ createdAt: -1 });
-
-    res.status(200).json({
-      success: true,
-      posts,
-    });
-  } catch (error) {
-    console.error("Error in GetAllPosts:", error);
-    res.status(500).json({
-      success: false,
-      error: "Failed to fetch posts",
-    });
-  }
-};
-
-exports.EditPost = async (req, res) => {
-  try {
-    const { id, text, tobePublishedAt } = req.body;
-    const files = req.files;
-
-    const post = await LinkedInPost.findById(id);
-    if (!post) {
-      return res.status(404).json({
-        success: false,
-        message: "Post not found",
-      });
-    }
-
-    if (post.status === "published") {
-      return res.status(400).json({
-        success: false,
-        message: "Published post cannot be edited",
-      });
-    }
-
-    // If new image is uploaded, delete old image and upload new one
-    if (files && files.img && files.img[0]) {
-      if (post.img) {
-        await DeleteImage(post.img);
-      }
-      const fileName = `post-${Date.now()}.jpg`;
-      const imageUrl = await UploadImage(
-        files.img[0].buffer,
-        fileName,
-        "linkedin"
-      );
-      post.img = imageUrl;
-    }
-
-    post.text = text;
-    post.tobePublishedAt = tobePublishedAt;
-    await post.save();
-
-    return res.status(200).json({
-      success: true,
-      message: "Post updated successfully",
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({
-      success: false,
-      error: "Failed to update post. Please try again later.",
-    });
-  }
-};
-
-exports.DeletePost = async (req, res) => {
-  try {
-    const { id } = req.body;
-    const post = await LinkedInPost.findById(id);
-
-    if (!post) {
-      return res.status(404).json({
-        success: false,
-        message: "Post not found",
-      });
-    }
-
-    // Delete image from Firebase if exists
-    if (post.img) {
-      await DeleteImage(post.img);
-    }
-
-    await LinkedInPost.findByIdAndDelete(id);
-
-    return res.status(200).json({
-      success: true,
-      message: "Post deleted successfully",
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({
-      success: false,
-      error: "Failed to delete post. Please try again later.",
-    });
-  }
-};
-
 exports.CreatePost = async (req, res) => {
   try {
     const { text, tobePublishedAt, action, prompt } = req.body;
@@ -311,7 +211,7 @@ exports.CreatePost = async (req, res) => {
       const imageBuffer = await GenerateImage(`Create a professional LinkedIn banner image that represents ${postContent.substring(0, 100)}. Ensure no text in image. Keep one object in center and create clean background.`);
       const fileName = `post-${Date.now()}.jpg`;
       imageUrl = await UploadImage(imageBuffer, fileName, "linkedin");
-    } else if (action === "manual-content") {
+    } else if (action === "manual") {
       if (!text) {
         return res.status(400).json({
           success: false,
@@ -420,3 +320,103 @@ exports.CreatePost = async (req, res) => {
     });
   }
 };
+exports.GetAllPosts = async (req, res) => {
+  try {
+    const posts = await LinkedInPost.find().sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      posts,
+    });
+  } catch (error) {
+    console.error("Error in GetAllPosts:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to fetch posts",
+    });
+  }
+};
+
+exports.EditPost = async (req, res) => {
+  try {
+    const { id, text, tobePublishedAt } = req.body;
+    const files = req.files;
+
+    const post = await LinkedInPost.findById(id);
+    if (!post) {
+      return res.status(404).json({
+        success: false,
+        message: "Post not found",
+      });
+    }
+
+    if (post.status === "published") {
+      return res.status(400).json({
+        success: false,
+        message: "Published post cannot be edited",
+      });
+    }
+
+    // If new image is uploaded, delete old image and upload new one
+    if (files && files.img && files.img[0]) {
+      if (post.img) {
+        await DeleteImage(post.img);
+      }
+      const fileName = `post-${Date.now()}.jpg`;
+      const imageUrl = await UploadImage(
+        files.img[0].buffer,
+        fileName,
+        "linkedin"
+      );
+      post.img = imageUrl;
+    }
+
+    post.text = text;
+    post.tobePublishedAt = tobePublishedAt;
+    await post.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Post updated successfully",
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to update post. Please try again later.",
+    });
+  }
+};
+
+exports.DeletePost = async (req, res) => {
+  try {
+    const { id } = req.body;
+    const post = await LinkedInPost.findById(id);
+
+    if (!post) {
+      return res.status(404).json({
+        success: false,
+        message: "Post not found",
+      });
+    }
+
+    // Delete image from Firebase if exists
+    if (post.img) {
+      await DeleteImage(post.img);
+    }
+
+    await LinkedInPost.findByIdAndDelete(id);
+
+    return res.status(200).json({
+      success: true,
+      message: "Post deleted successfully",
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to delete post. Please try again later.",
+    });
+  }
+};
+
