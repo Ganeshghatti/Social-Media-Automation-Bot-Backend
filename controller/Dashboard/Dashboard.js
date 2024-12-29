@@ -6,8 +6,8 @@ const LinkedinPosts = require('../../models/LinkedinPosts');
 exports.GetDashboardStats = async (req, res) => {
   try {
     const today = moment().startOf('day');
-    const weekStart = moment().startOf('week');
-    const weekEnd = moment().endOf('week');
+    const last7Days = moment().subtract(6, 'days').startOf('day');
+    const monthStart = moment().startOf('month');
 
     // Get today's posts
     const [todayTwitterPosts, todayInstagramPosts, todayLinkedinPosts] = await Promise.all([
@@ -31,102 +31,149 @@ exports.GetDashboardStats = async (req, res) => {
       })
     ]);
 
-    // Get this week's posts
+    // Get last 7 days posts
     const [weeklyTwitterPosts, weeklyInstagramPosts, weeklyLinkedinPosts] = await Promise.all([
       TwitterPosts.find({
         tobePublishedAt: {
-          $gte: weekStart.toDate(),
-          $lte: weekEnd.toDate()
+          $gte: last7Days.toDate(),
+          $lte: moment().endOf('day').toDate()
         }
       }),
       InstagramPosts.find({
         tobePublishedAt: {
-          $gte: weekStart.toDate(),
-          $lte: weekEnd.toDate()
+          $gte: last7Days.toDate(),
+          $lte: moment().endOf('day').toDate()
         }
       }),
       LinkedinPosts.find({
         tobePublishedAt: {
-          $gte: weekStart.toDate(),
-          $lte: weekEnd.toDate()
+          $gte: last7Days.toDate(),
+          $lte: moment().endOf('day').toDate()
         }
       })
     ]);
 
-    // Get scheduled posts for today
-    const [scheduledTwitterPosts, scheduledInstagramPosts, scheduledLinkedinPosts] = await Promise.all([
+    // Get this month's posts
+    const [monthlyTwitterPosts, monthlyInstagramPosts, monthlyLinkedinPosts] = await Promise.all([
       TwitterPosts.find({
         tobePublishedAt: {
-          $gte: today.toDate(),
-          $lte: moment().endOf('day').toDate()
-        },
-        isPublished: false
-      }).select('text tobePublishedAt status'),
+          $gte: monthStart.toDate(),
+          $lte: moment().endOf('month').toDate()
+        }
+      }),
       InstagramPosts.find({
         tobePublishedAt: {
-          $gte: today.toDate(),
-          $lte: moment().endOf('day').toDate()
-        },
-        isPublished: false
-      }).select('text tobePublishedAt status'),
+          $gte: monthStart.toDate(),
+          $lte: moment().endOf('month').toDate()
+        }
+      }),
       LinkedinPosts.find({
         tobePublishedAt: {
-          $gte: today.toDate(),
-          $lte: moment().endOf('day').toDate()
+          $gte: monthStart.toDate(),
+          $lte: moment().endOf('month').toDate()
+        }
+      })
+    ]);
+
+    // Calculate daily stats for last 7 days
+    const dailyStats = {};
+    for (let i = 0; i < 7; i++) {
+      const date = moment().subtract(i, 'days').format('YYYY-MM-DD');
+      const dayStart = moment().subtract(i, 'days').startOf('day');
+      const dayEnd = moment().subtract(i, 'days').endOf('day');
+
+      dailyStats[date] = {
+        totalPosts: {
+          all: weeklyTwitterPosts.filter(post => 
+            moment(post.tobePublishedAt).isBetween(dayStart, dayEnd, null, '[]') && 
+            post.isPublished
+          ).length +
+          weeklyInstagramPosts.filter(post => 
+            moment(post.tobePublishedAt).isBetween(dayStart, dayEnd, null, '[]') && 
+            post.isPublished
+          ).length +
+          weeklyLinkedinPosts.filter(post => 
+            moment(post.tobePublishedAt).isBetween(dayStart, dayEnd, null, '[]') && 
+            post.isPublished
+          ).length,
+          twitter: weeklyTwitterPosts.filter(post => 
+            moment(post.tobePublishedAt).isBetween(dayStart, dayEnd, null, '[]') && 
+            post.isPublished
+          ).length,
+          instagram: weeklyInstagramPosts.filter(post => 
+            moment(post.tobePublishedAt).isBetween(dayStart, dayEnd, null, '[]') && 
+            post.isPublished
+          ).length,
+          linkedin: weeklyLinkedinPosts.filter(post => 
+            moment(post.tobePublishedAt).isBetween(dayStart, dayEnd, null, '[]') && 
+            post.isPublished
+          ).length
         },
-        isPublished: false
-      }).select('text tobePublishedAt status')
-    ]);
-
-    // Get total posts count
-    const [totalTwitterPosts, totalInstagramPosts, totalLinkedinPosts] = await Promise.all([
-      TwitterPosts.countDocuments(),
-      InstagramPosts.countDocuments(),
-      LinkedinPosts.countDocuments()
-    ]);
-
-    // Get published vs scheduled stats for this week
-    const weeklyStats = {
-      twitter: {
-        published: weeklyTwitterPosts.filter(post => post.isPublished).length,
-        scheduled: weeklyTwitterPosts.filter(post => !post.isPublished).length
-      },
-      instagram: {
-        published: weeklyInstagramPosts.filter(post => post.isPublished).length,
-        scheduled: weeklyInstagramPosts.filter(post => !post.isPublished).length
-      },
-      linkedin: {
-        published: weeklyLinkedinPosts.filter(post => post.isPublished).length,
-        scheduled: weeklyLinkedinPosts.filter(post => !post.isPublished).length
-      }
-    };
+        scheduled: {
+          all: weeklyTwitterPosts.filter(post => 
+            moment(post.tobePublishedAt).isBetween(dayStart, dayEnd, null, '[]') && 
+            !post.isPublished
+          ).length +
+          weeklyInstagramPosts.filter(post => 
+            moment(post.tobePublishedAt).isBetween(dayStart, dayEnd, null, '[]') && 
+            !post.isPublished
+          ).length +
+          weeklyLinkedinPosts.filter(post => 
+            moment(post.tobePublishedAt).isBetween(dayStart, dayEnd, null, '[]') && 
+            !post.isPublished
+          ).length,
+          twitter: weeklyTwitterPosts.filter(post => 
+            moment(post.tobePublishedAt).isBetween(dayStart, dayEnd, null, '[]') && 
+            !post.isPublished
+          ).length,
+          instagram: weeklyInstagramPosts.filter(post => 
+            moment(post.tobePublishedAt).isBetween(dayStart, dayEnd, null, '[]') && 
+            !post.isPublished
+          ).length,
+          linkedin: weeklyLinkedinPosts.filter(post => 
+            moment(post.tobePublishedAt).isBetween(dayStart, dayEnd, null, '[]') && 
+            !post.isPublished
+          ).length
+        }
+      };
+    }
 
     const dashboardStats = {
       today: {
         totalPosts: todayTwitterPosts.length + todayInstagramPosts.length + todayLinkedinPosts.length,
-        scheduledPosts: scheduledTwitterPosts.length + scheduledInstagramPosts.length + scheduledLinkedinPosts.length,
+        scheduledPosts: todayTwitterPosts.filter(post => post.status === 'scheduled').length +
+                       todayInstagramPosts.filter(post => post.status === 'scheduled').length +
+                       todayLinkedinPosts.filter(post => post.status === 'scheduled').length,
         platformWise: {
           twitter: todayTwitterPosts.length,
           instagram: todayInstagramPosts.length,
           linkedin: todayLinkedinPosts.length
         }
       },
-      thisWeek: {
+      last7Days: {
         totalPosts: weeklyTwitterPosts.length + weeklyInstagramPosts.length + weeklyLinkedinPosts.length,
-        stats: weeklyStats
-      },
-      allTime: {
-        totalPosts: totalTwitterPosts + totalInstagramPosts + totalLinkedinPosts,
         platformWise: {
-          twitter: totalTwitterPosts,
-          instagram: totalInstagramPosts,
-          linkedin: totalLinkedinPosts
+          twitter: weeklyTwitterPosts.length,
+          instagram: weeklyInstagramPosts.length,
+          linkedin: weeklyLinkedinPosts.length
+        },
+        dailyStats: dailyStats
+      },
+      thisMonth: {
+        totalPosts: monthlyTwitterPosts.length + monthlyInstagramPosts.length + monthlyLinkedinPosts.length,
+        platformWise: {
+          twitter: monthlyTwitterPosts.length,
+          instagram: monthlyInstagramPosts.length,
+          linkedin: monthlyLinkedinPosts.length
         }
       },
-      scheduledToday: {
-        twitter: scheduledTwitterPosts,
-        instagram: scheduledInstagramPosts,
-        linkedin: scheduledLinkedinPosts
+      allTime: {
+        totalPosts: 0, // Placeholder for total posts, needs to be calculated
+        platformWise: {
+          twitter: 0, // Placeholder for total Twitter posts
+          instagram: 0, // Placeholder for total Instagram posts
+          linkedin: 0 // Placeholder for total Linkedin posts
+        }
       }
     };
 
@@ -134,7 +181,6 @@ exports.GetDashboardStats = async (req, res) => {
       success: true,
       data: dashboardStats
     });
-
   } catch (error) {
     console.error('Dashboard Error:', error);
     res.status(500).json({

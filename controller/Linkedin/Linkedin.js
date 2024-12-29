@@ -52,7 +52,10 @@ exports.InstantPost = async (req, res, next) => {
     }
 
     // Generate and upload image
-    const imagePrompt = `Create a professional LinkedIn banner image that represents ${postContent.substring(0, 100)}. Ensure no text in image. Keep one object in center and create clean background.`;
+    const imagePrompt = `Create a professional LinkedIn banner image that represents ${postContent.substring(
+      0,
+      100
+    )}. Ensure no text in image. Keep one object in center and create clean background.`;
     const imageBuffer = await GenerateImage(imagePrompt);
     if (!imageBuffer) {
       NotifyError("Image generation failed", "Instant Post");
@@ -70,39 +73,40 @@ exports.InstantPost = async (req, res, next) => {
 
     // Register image with LinkedIn
     const registerImageResponse = await axios.post(
-      'https://api.linkedin.com/v2/assets?action=registerUpload',
+      "https://api.linkedin.com/v2/assets?action=registerUpload",
       {
         registerUploadRequest: {
           recipes: ["urn:li:digitalmediaRecipe:feedshare-image"],
           owner: `urn:li:person:${credentials.personId}`,
-          serviceRelationships: [{
-            relationshipType: "OWNER",
-            identifier: "urn:li:userGeneratedContent"
-          }]
-        }
+          serviceRelationships: [
+            {
+              relationshipType: "OWNER",
+              identifier: "urn:li:userGeneratedContent",
+            },
+          ],
+        },
       },
       {
         headers: {
-          'Authorization': `Bearer ${credentials.accessToken}`,
-          'Content-Type': 'application/json',
-        }
+          Authorization: `Bearer ${credentials.accessToken}`,
+          "Content-Type": "application/json",
+        },
       }
     );
 
-    const uploadUrl = registerImageResponse.data.value.uploadMechanism['com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest'].uploadUrl;
+    const uploadUrl =
+      registerImageResponse.data.value.uploadMechanism[
+        "com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest"
+      ].uploadUrl;
     const asset = registerImageResponse.data.value.asset;
 
     // Upload image to LinkedIn
-    await axios.put(
-      uploadUrl,
-      downloadedImageBuffer,
-      {
-        headers: {
-          'Authorization': `Bearer ${credentials.accessToken}`,
-          'Content-Type': 'image/jpeg',
-        }
-      }
-    );
+    await axios.put(uploadUrl, downloadedImageBuffer, {
+      headers: {
+        Authorization: `Bearer ${credentials.accessToken}`,
+        "Content-Type": "image/jpeg",
+      },
+    });
 
     // Create post with image
     const postData = {
@@ -111,24 +115,26 @@ exports.InstantPost = async (req, res, next) => {
       specificContent: {
         "com.linkedin.ugc.ShareContent": {
           shareCommentary: {
-            text: postContent
+            text: postContent,
           },
           shareMediaCategory: "IMAGE",
-          media: [{
-            status: "READY",
-            description: {
-              text: "Post image"
+          media: [
+            {
+              status: "READY",
+              description: {
+                text: "Post image",
+              },
+              media: asset,
+              title: {
+                text: "Post image",
+              },
             },
-            media: asset,
-            title: {
-              text: "Post image"
-            }
-          }]
-        }
+          ],
+        },
       },
       visibility: {
-        "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC"
-      }
+        "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC",
+      },
     };
 
     const response = await axios.post(
@@ -204,22 +210,27 @@ exports.CreatePost = async (req, res) => {
       if (!postContent) {
         return res.status(400).json({
           success: false,
-          message: "Failed to generate content"
+          message: "Failed to generate content",
         });
       }
 
-      const imageBuffer = await GenerateImage(`Create a professional LinkedIn banner image that represents ${postContent.substring(0, 100)}. Ensure no text in image. Keep one object in center and create clean background.`);
+      const imageBuffer = await GenerateImage(
+        `Create a professional LinkedIn banner image that represents ${postContent.substring(
+          0,
+          100
+        )}. Ensure no text in image. Keep one object in center and create clean background.`
+      );
       const fileName = `post-${Date.now()}.jpg`;
       imageUrl = await UploadImage(imageBuffer, fileName, "linkedin");
     } else if (action === "manual") {
       if (!text) {
         return res.status(400).json({
           success: false,
-          message: "Text is required"
+          message: "Text is required",
         });
       }
       postContent = text;
-      
+
       if (files.img && files.img[0]) {
         const fileName = `post-${Date.now()}.jpg`;
         imageUrl = await UploadImage(files.img[0].buffer, fileName, "linkedin");
@@ -232,14 +243,14 @@ exports.CreatePost = async (req, res) => {
       specificContent: {
         "com.linkedin.ugc.ShareContent": {
           shareCommentary: {
-            text: postContent
+            text: postContent,
           },
-          shareMediaCategory: imageUrl ? "IMAGE" : "NONE"
-        }
+          shareMediaCategory: imageUrl ? "IMAGE" : "NONE",
+        },
       },
       visibility: {
-        "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC"
-      }
+        "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC",
+      },
     };
 
     // If image exists, add media details
@@ -252,47 +263,55 @@ exports.CreatePost = async (req, res) => {
 
       // Register image with LinkedIn
       const registerImageResponse = await axios.post(
-        'https://api.linkedin.com/v2/assets?action=registerUpload',
+        "https://api.linkedin.com/v2/assets?action=registerUpload",
         {
           registerUploadRequest: {
             recipes: ["urn:li:digitalmediaRecipe:feedshare-image"],
             owner: `urn:li:person:${credentials.personId}`,
-            serviceRelationships: [{
-              relationshipType: "OWNER",
-              identifier: "urn:li:userGeneratedContent"
-            }]
-          }
+            serviceRelationships: [
+              {
+                relationshipType: "OWNER",
+                identifier: "urn:li:userGeneratedContent",
+              },
+            ],
+          },
         },
         {
           headers: {
-            'Authorization': `Bearer ${credentials.accessToken}`,
-            'Content-Type': 'application/json',
-          }
+            Authorization: `Bearer ${credentials.accessToken}`,
+            "Content-Type": "application/json",
+          },
         }
       );
 
-      const uploadUrl = registerImageResponse.data.value.uploadMechanism['com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest'].uploadUrl;
+      const uploadUrl =
+        registerImageResponse.data.value.uploadMechanism[
+          "com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest"
+        ].uploadUrl;
       const asset = registerImageResponse.data.value.asset;
 
       // Upload image to LinkedIn
       await axios.put(uploadUrl, downloadedImageBuffer, {
         headers: {
-          'Authorization': `Bearer ${credentials.accessToken}`,
-          'Content-Type': 'application/octet-stream',
-        }
+          Authorization: `Bearer ${credentials.accessToken}`,
+          "Content-Type": "application/octet-stream",
+        },
       });
 
       // Add media to post data
-      linkedInPostData.specificContent["com.linkedin.ugc.ShareContent"].media = [{
-        status: "READY",
-        description: {
-          text: "Post image"
-        },
-        media: asset,
-        title: {
-          text: "Post image"
-        }
-      }];
+      linkedInPostData.specificContent["com.linkedin.ugc.ShareContent"].media =
+        [
+          {
+            status: "READY",
+            description: {
+              text: "Post image",
+            },
+            media: asset,
+            title: {
+              text: "Post image",
+            },
+          },
+        ];
     }
 
     const post = new LinkedInPost({
@@ -300,7 +319,7 @@ exports.CreatePost = async (req, res) => {
       tobePublishedAt: tobePublishedAt || new Date(),
       isPublished: false,
       img: imageUrl,
-      status: "scheduled"
+      status: "scheduled",
     });
 
     await post.save();
@@ -309,14 +328,13 @@ exports.CreatePost = async (req, res) => {
     return res.status(201).json({
       success: true,
       message: "Post created successfully",
-      post
+      post,
     });
-
   } catch (error) {
     console.error(error);
     res.status(500).json({
       success: false,
-      error: "Failed to create post. Please try again later."
+      error: "Failed to create post. Please try again later.",
     });
   }
 };
@@ -324,20 +342,20 @@ exports.CreatePost = async (req, res) => {
 exports.GetAllPosts = async (req, res) => {
   try {
     const posts = await LinkedInPost.find().sort({ tobePublishedAt: -1 });
-    
+
     const groupedPosts = posts.reduce((acc, post) => {
-      const date = moment(post.tobePublishedAt).format('YYYY-MM-DD');
-      
-      const existingGroup = acc.find(group => group.date === date);
+      const date = moment(post.tobePublishedAt).format("YYYY-MM-DD");
+
+      const existingGroup = acc.find((group) => group.date === date);
       if (existingGroup) {
         existingGroup.posts.push(post);
       } else {
         acc.push({
           date: date,
-          posts: [post]
+          posts: [post],
         });
       }
-      
+
       return acc;
     }, []);
 
@@ -345,13 +363,13 @@ exports.GetAllPosts = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      data: groupedPosts
+      data: groupedPosts,
     });
   } catch (error) {
     console.error(error);
     res.status(500).json({
       success: false,
-      error: "Failed to fetch posts"
+      error: "Failed to fetch posts",
     });
   }
 };
@@ -439,3 +457,28 @@ exports.DeletePost = async (req, res) => {
   }
 };
 
+exports.GetPostsByDate = async (req, res) => {
+  try {
+    const { date } = req.params;
+    const startDate = moment(date).startOf("day");
+    const endDate = moment(date).endOf("day");
+
+    const posts = await LinkedInPost.find({
+      tobePublishedAt: {
+        $gte: startDate.toDate(),
+        $lte: endDate.toDate(),
+      },
+    }).sort({ tobePublishedAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      data: posts,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to fetch posts for the specified date",
+    });
+  }
+};

@@ -9,6 +9,7 @@ const {
   EditPost,
   DeletePost,
   CreatePost,
+  GetPostsByDate
 } = require("../../controller/Twitter/Twitter");
 
 router.route("/twitter/instant-post").post(InstantPost);
@@ -20,5 +21,6 @@ router.route("/twitter/edit-post").put(upload.fields([
   { name: "img", maxCount: 1 },
 ]), EditPost);
 router.route("/twitter/delete-post").delete(DeletePost);
+router.route("/twitter/get-posts-by-date/:date").get(GetPostsByDate);
 
 module.exports = router;

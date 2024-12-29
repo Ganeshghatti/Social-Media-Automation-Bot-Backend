@@ -28,11 +28,12 @@ const instagramConfig = {
 
 const cronPublishPosts = async () => {
   try {
-    const currentDate = moment();
+    // Use UTC for consistency
+    const currentDate = moment().utc();
     console.log(
       `Checking for posts to publish at ${currentDate.format(
         "MMMM Do YYYY, h:mm:ss a"
-      )}`
+      )} UTC`
     );
 
     // Get all posts (including future posts) for all platforms
@@ -63,15 +64,21 @@ const cronPublishPosts = async () => {
     // Get unpublished posts for all platforms that are due now
     const [twitterPosts, instagramPosts, linkedinPosts] = await Promise.all([
       TwitterPosts.find({
-        tobePublishedAt: { $lte: currentDate.toDate() },
+        tobePublishedAt: { 
+          $lte: currentDate.toDate() 
+        },
         isPublished: false,
       }).sort({ tobePublishedAt: 1 }),
       InstagramPosts.find({
-        tobePublishedAt: { $lte: currentDate.toDate() },
+        tobePublishedAt: { 
+          $lte: currentDate.toDate() 
+        },
         isPublished: false,
       }).sort({ tobePublishedAt: 1 }),
       LinkedinPosts.find({
-        tobePublishedAt: { $lte: currentDate.toDate() },
+        tobePublishedAt: { 
+          $lte: currentDate.toDate() 
+        },
         isPublished: false,
       }).sort({ tobePublishedAt: 1 }),
     ]);

@@ -9,6 +9,7 @@ const {
   EditPost,
   DeletePost,
   CreatePost,
+  GetPostsByDate,
 } = require("../../controller/Instagram/Instagram");
 
 router.route("/instagram/get-all-posts").get(GetAllPosts);
@@ -20,5 +21,6 @@ router.route("/instagram/edit-post").put(upload.fields([
   { name: "img", maxCount: 1 },
 ]), EditPost);
 router.route("/instagram/delete-post").delete(DeletePost);
+router.route("/instagram/get-posts-by-date/:date").get(GetPostsByDate);
 
 module.exports = router;

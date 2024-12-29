@@ -384,3 +384,28 @@ exports.CreatePost = async (req, res) => {
     });
   }
 };
+
+exports.GetPostsByDate = async (req, res) => { try {
+  const { date } = req.params;
+  const startDate = moment(date).startOf('day');
+  const endDate = moment(date).endOf('day');
+
+  const posts = await InstagramPost.find({
+    tobePublishedAt: {
+      $gte: startDate.toDate(),
+      $lte: endDate.toDate()
+    }
+  }).sort({ tobePublishedAt: -1 });
+
+  res.status(200).json({
+    success: true,
+    data: posts
+  });
+} catch (error) {
+  console.error(error);
+  res.status(500).json({
+    success: false,
+      error: "Failed to fetch posts for the specified date",
+    });
+  }
+};

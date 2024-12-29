@@ -9,6 +9,7 @@ const {
   EditPost,
   DeletePost,
   CreatePost,
+  GetPostsByDate,
 } = require("../../controller/Linkedin/Linkedin");
 
 router.route("/linkedin/get-all-posts").get(GetAllPosts);
@@ -20,6 +21,6 @@ router.route("/linkedin/edit-post").put(upload.fields([
   { name: "img", maxCount: 1 },
 ]), EditPost);
 router.route("/linkedin/delete-post").delete(DeletePost);
-
+router.route("/linkedin/get-posts-by-date/:date").get(GetPostsByDate);
 
 module.exports = router;
