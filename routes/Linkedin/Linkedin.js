@@ -16,10 +16,10 @@ router.route("/linkedin/create-post").post(upload.fields([
   { name: "img", maxCount: 1 },
 ]), CreatePost);
 router.route("/linkedin/instant-post").post(InstantPost);
-router.route("/linkedin/edit-post", upload.fields([
+router.route("/linkedin/edit-post").put(upload.fields([
   { name: "img", maxCount: 1 },
 ]), EditPost);
-router.route("/linkedin/delete-post").post(DeletePost);
+router.route("/linkedin/delete-post").delete(DeletePost);
 
 
 module.exports = router;

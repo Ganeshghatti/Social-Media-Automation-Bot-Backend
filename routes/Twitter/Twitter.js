@@ -16,9 +16,9 @@ router.route("/twitter/create-post").post(upload.fields([
   { name: "img", maxCount: 1 },
 ]), CreatePost);
 router.route("/twitter/get-all-posts").get(GetAllPosts);
-router.route("/twitter/edit-post").post(upload.fields([
+router.route("/twitter/edit-post").put(upload.fields([
   { name: "img", maxCount: 1 },
 ]), EditPost);
-router.route("/twitter/delete-post").post(DeletePost);
+router.route("/twitter/delete-post").delete(DeletePost);
 
 module.exports = router;

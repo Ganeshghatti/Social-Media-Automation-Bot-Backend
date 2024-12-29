@@ -16,9 +16,9 @@ router.route("/instagram/create-post").post(upload.fields([
   { name: "img", maxCount: 1 },
 ]), CreatePost);
 router.route("/instagram/instant-post").post(InstantPost);
-router.route("/instagram/edit-post", upload.fields([
+router.route("/instagram/edit-post").put(upload.fields([
   { name: "img", maxCount: 1 },
 ]), EditPost);
-router.route("/instagram/delete-post").post(DeletePost);
+router.route("/instagram/delete-post").delete(DeletePost);
 
 module.exports = router;
