@@ -9,7 +9,7 @@ const instagramRoutes = require("./routes/Instagram/Instagram");
 const dotenv = require("dotenv");
 const moment = require("moment");
 const momentTimezone = require("moment-timezone");
-const { cronPublishPosts } = require("./cron/cronPublishPosts");
+// const { cronPublishPosts } = require("./cron/cronPublishPosts");
 const { cronInstagramPosts } = require("./cron/Instagram/cronInstagramPosts");
 const { cronTwitterPosts } = require("./cron/Twitter/cronTwitterPosts");
 const { cronLinkedInPosts } = require("./cron/LinkedIn/cronLinkedInPosts");
@@ -34,7 +34,6 @@ app.get("/", (req, res) => {
 
 connectDatabase();
 
-momentTimezone.tz.setDefault("Asia/Kolkata");
 console.log(moment());
 
 // Start the server

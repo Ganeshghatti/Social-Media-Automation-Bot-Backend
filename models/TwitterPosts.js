@@ -16,6 +16,11 @@ const twitterPostsSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  status: {
+    type: String,
+    default: "draft",
+    enum: ["draft", "scheduled", "published"],
+  },
   isPublished: {
     type: Boolean,
     default: false,

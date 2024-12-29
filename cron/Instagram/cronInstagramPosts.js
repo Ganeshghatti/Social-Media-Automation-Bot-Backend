@@ -63,15 +63,13 @@ const cronInstagramPosts = async (time) => {
       const imageurl = await UploadImage(imageBuffer, fileName, "instagram");
 
       const publishTime = moment()
-        .tz("Asia/Kolkata")
-        // .add(1, "days")
+        .add(1, 'days')
         .set({
           hour: t.publishedAt[0],
           minute: t.publishedAt[1],
           second: t.publishedAt[2],
           millisecond: t.publishedAt[3],
         })
-        .utcOffset("+05:30", true)
         .toDate();
 
       const post = new InstagramPost({
@@ -79,6 +77,7 @@ const cronInstagramPosts = async (time) => {
         tobePublishedAt: publishTime,
         isPublished: false,
         img: imageurl,
+        status: "scheduled",
       });
 
       await post.save();
@@ -102,8 +101,5 @@ cron.schedule(
       { publishedAt: [6, 35, 0, 0] }, // 9:00 PM IST
     ];
     cronInstagramPosts(time);
-  },
-  {
-    timezone: "Asia/Kolkata",
   }
 );

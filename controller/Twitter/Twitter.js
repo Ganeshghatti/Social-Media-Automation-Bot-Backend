@@ -6,9 +6,11 @@ const GeneratePostContent = require("../../utils/Twitter/GeneratePostContent");
 const GenerateImage = require("../../utils/Twitter/GenerateImage");
 const NotifyError = require("../../utils/mail/NotifyError");
 const NotifyInstantPost = require("../../utils/mail/NotifyInstantPost");
+const NotifyCreatePost = require("../../utils/mail/NotifyCreatePost");
 const dotenv = require("dotenv");
 const UploadImage = require("../../utils/cloud/UploadImage");
-const axios = require('axios');
+const axios = require("axios");
+const DeleteImage = require("../../utils/cloud/DeleteImage");
 
 const envFile = process.env.SOCIAL_MEDIA_ENV;
 dotenv.config({ path: envFile });
@@ -21,23 +23,6 @@ const TwitterClient = new TwitterApi({
 });
 
 const rwClient = TwitterClient.readWrite;
-
-exports.GetAllPosts = async (req, res) => {
-  try {
-    const posts = await TwitterPost.find().sort({ createdAt: -1 });
-
-    res.status(200).json({
-      success: true,
-      posts,
-    });
-  } catch (error) {
-    console.error("Error in GetAllPosts:", error);
-    res.status(500).json({
-      success: false,
-      error: "Failed to fetch posts",
-    });
-  }
-};
 
 exports.InstantPost = async (req, res, next) => {
   try {
@@ -152,12 +137,14 @@ exports.InstantPost = async (req, res, next) => {
     const imageUrl = await UploadImage(imageBuffer, fileName, "twitter");
 
     // Download the image from Firebase URL
-    const imageResponse = await axios.get(imageUrl, { responseType: 'arraybuffer' });
+    const imageResponse = await axios.get(imageUrl, {
+      responseType: "arraybuffer",
+    });
     const downloadedImageBuffer = imageResponse.data;
 
     // Specify the media type when uploading to Twitter
     const mediaId = await TwitterClient.v1.uploadMedia(downloadedImageBuffer, {
-      mimeType: 'image/jpeg'  // Specify the MIME type
+      mimeType: "image/jpeg", // Specify the MIME type
     });
 
     await rwClient.v2.tweet({
@@ -167,9 +154,10 @@ exports.InstantPost = async (req, res, next) => {
 
     const post = new TwitterPost({
       text: tweetContent,
-      tobePublishedAt: moment().tz("Asia/Kolkata").toDate(),
+      tobePublishedAt: moment().utc().toDate(),
       isPublished: true,
       img: imageUrl,
+      status: "published",
     });
 
     await post.save();
@@ -184,6 +172,238 @@ exports.InstantPost = async (req, res, next) => {
     res.status(500).json({
       success: false,
       error: "Failed to create post. Please try again later.",
+    });
+  }
+};
+
+exports.CreatePost = async (req, res) => {
+  try {
+    const { text, tobePublishedAt, action, prompt } = req.body;
+    const files = req.files || {}; // Ensure files is defined
+    let postContent, imageUrl;
+    console.log(text, files.img ? files.img[0] : null); // Updated to check if files.img exists
+
+    if (action === "automated") {
+      // Static prompt for now, similar to InstantPost
+      const staticPrompt = `
+        You are a web developer and digital marketing expert who helps businesses grow online.
+        Create an informative and engaging post about web development and SEO.
+        
+        Requirements:
+        - Extract 2-3 specific, actionable tips
+        - Focus on sharing valuable knowledge
+        - Make it practical and implementable
+        - Break down complex concepts into simple terms
+        - Add one subtle CTA at the end
+        - Keep it between 2000-2500 characters
+        - Make it feel like expert advice
+        
+        Format:
+        [Catchy title or hook]
+        
+        [2-3 sentences about the topic]
+        
+        [Main content]
+        
+        [2-3 actionable tips]
+        
+        [Subtle CTA]
+        
+        Return ONLY the post text, nothing else.
+      `;
+
+      postContent = await GeneratePostContent(staticPrompt);
+      if (!postContent) {
+        return res.status(400).json({
+          success: false,
+          message: "Failed to generate content",
+        });
+      }
+
+      // Generate image based on content
+      const imageBuffer = await GenerateImage(
+        `Create a visually stunning image that captures the essence of ${postContent.substring(
+          0,
+          100
+        )}. Ensure no text in image. Keep one object in center and create clean background.`
+      );
+      const fileName = `post-${Date.now()}.jpg`;
+      imageUrl = await UploadImage(imageBuffer, fileName, "twitter");
+    } else if (action === "manual") {
+      // Use user provided content and image
+      console.log(text, files.img ? files.img[0] : null); // Updated to check if files.img exists
+      if (!text || !files.img || !files.img[0]) {
+        return res.status(400).json({
+          success: false,
+          message: "Both text and image are required",
+        });
+      }
+      postContent = text;
+      const fileName = `post-${Date.now()}.jpg`;
+      imageUrl = await UploadImage(
+        files.img[0].buffer,
+        fileName,
+        "twitter"
+      );
+    } else if (action === "only-automate-content-with-prompt") {
+      // Generate content with user's prompt, use user's image
+      if (!prompt || !files.img || !files.img[0]) {
+        return res.status(400).json({
+          success: false,
+          message: "Both prompt and image are required",
+        });
+      }
+      postContent = await GeneratePostContent(prompt);
+      const fileName = `post-${Date.now()}.jpg`;
+      imageUrl = await UploadImage(files.img[0].buffer, fileName, "twitter");
+    } else if (action === "only-automate-image-with-prompt") {
+      // Use user's content, generate image with prompt
+      if (!text || !prompt) {
+        return res.status(400).json({
+          success: false,
+          message: "Both text and image prompt are required",
+        });
+      }
+      postContent = text;
+      const imageBuffer = await GenerateImage(prompt);
+      const fileName = `post-${Date.now()}.jpg`;
+      imageUrl = await UploadImage(imageBuffer, fileName, "twitter");
+    } else if (action === "automate-with-prompt") {
+      // Generate both content and image with user's prompts
+      if (!prompt) {
+        return res.status(400).json({
+          success: false,
+          message: "Prompt is required",
+        });
+      }
+      postContent = await GeneratePostContent(prompt);
+      const imageBuffer = await GenerateImage(prompt);
+      const fileName = `post-${Date.now()}.jpg`;
+      imageUrl = await UploadImage(imageBuffer, fileName, "twitter");
+    }
+
+    // Create and save post
+    const post = new TwitterPost({
+      text: postContent,
+      tobePublishedAt: tobePublishedAt || new Date(),
+      isPublished: false,
+      img: imageUrl,
+      status: "scheduled",
+    });
+
+    await post.save();
+    NotifyCreatePost(post);
+
+    return res.status(201).json({
+      success: true,
+      message: "Post created successfully",
+      post,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to create post. Please try again later.",
+    });
+  }
+};
+
+exports.GetAllPosts = async (req, res) => {
+  try {
+    const posts = await TwitterPost.find().sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      posts,
+    });
+  } catch (error) {
+    console.error("Error in GetAllPosts:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to fetch posts",
+    });
+  }
+};
+
+exports.EditPost = async (req, res) => {
+  try {
+    const { id, text, tobePublishedAt } = req.body;
+    const files = req.files;
+
+    const post = await TwitterPost.findById(id);
+    if (!post) {
+      return res.status(404).json({
+        success: false,
+        message: "Post not found",
+      });
+    }
+
+    if (post.status === "published") {
+      return res.status(400).json({
+        success: false,
+        message: "Published post cannot be edited",
+      });
+    }
+
+    // If new image is uploaded, delete old image and upload new one
+    if (files && files.img && files.img[0]) {
+      if (post.img) {
+        await DeleteImage(post.img);
+      }
+      const fileName = `post-${Date.now()}.jpg`;
+      const imageUrl = await UploadImage(
+        files.img[0].buffer,
+        fileName,
+        "twitter"
+      );
+      post.img = imageUrl;
+    }
+
+    post.text = text;
+    post.tobePublishedAt = tobePublishedAt;
+    await post.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Post updated successfully",
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to update post. Please try again later.",
+    });
+  }
+};
+
+exports.DeletePost = async (req, res) => {
+  try {
+    const { id } = req.body;
+    const post = await TwitterPost.findById(id);
+
+    if (!post) {
+      return res.status(404).json({
+        success: false,
+        message: "Post not found",
+      });
+    }
+
+    // Delete image from Firebase if exists
+    if (post.img) {
+      await DeleteImage(post.img);
+    }
+
+    await TwitterPost.findByIdAndDelete(id);
+
+    return res.status(200).json({
+      success: true,
+      message: "Post deleted successfully",
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to delete post. Please try again later.",
     });
   }
 };

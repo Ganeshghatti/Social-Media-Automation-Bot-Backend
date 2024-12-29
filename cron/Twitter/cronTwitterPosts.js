@@ -128,15 +128,13 @@ const cronTwitterPosts = async (time) => {
       const imageUrl = await UploadImage(imageBuffer, fileName, "twitter");
   
       const publishTime = moment()
-        .tz('Asia/Kolkata')
-        // .add(1, 'days')
+        .add(1, 'days')
         .set({
           hour: t.publishedAt[0],
           minute: t.publishedAt[1],
           second: t.publishedAt[2],
           millisecond: t.publishedAt[3],
         })
-        .utcOffset('+05:30', true)
         .toDate();
 
       console.log("Publish time set to:", publishTime);
@@ -145,6 +143,7 @@ const cronTwitterPosts = async (time) => {
         tobePublishedAt: publishTime,
         isPublished: false,
         img: imageUrl,
+        status: "scheduled",
       });
 
       await post.save();
@@ -166,6 +165,4 @@ cron.schedule("25 18 * * *", () => {
     { publishedAt: [18, 40, 0, 0] }  // 9:00 PM IST
   ];
   cronTwitterPosts(time);
-}, {
-  timezone: "Asia/Kolkata"
 });

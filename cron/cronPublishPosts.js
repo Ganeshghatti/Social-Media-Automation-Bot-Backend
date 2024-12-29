@@ -36,22 +36,29 @@ const cronPublishPosts = async () => {
     );
 
     // Get all posts (including future posts) for all platforms
-    const [allTwitterPosts, allInstagramPosts, allLinkedinPosts] = await Promise.all([
-      TwitterPosts.find().sort({ tobePublishedAt: 1 }),
-      InstagramPosts.find().sort({ tobePublishedAt: 1 }),
-      LinkedinPosts.find().sort({ tobePublishedAt: 1 }),
-    ]);
+    const [allTwitterPosts, allInstagramPosts, allLinkedinPosts] =
+      await Promise.all([
+        TwitterPosts.find().sort({ tobePublishedAt: 1 }),
+        InstagramPosts.find().sort({ tobePublishedAt: 1 }),
+        LinkedinPosts.find().sort({ tobePublishedAt: 1 }),
+      ]);
 
     // Filter future posts
-    const futureTwitterPosts = allTwitterPosts.filter(post => moment(post.tobePublishedAt).isAfter(currentDate));
-    const futureInstagramPosts = allInstagramPosts.filter(post => moment(post.tobePublishedAt).isAfter(currentDate));
-    const futureLinkedinPosts = allLinkedinPosts.filter(post => moment(post.tobePublishedAt).isAfter(currentDate));
+    const futureTwitterPosts = allTwitterPosts.filter((post) =>
+      moment(post.tobePublishedAt).isAfter(currentDate)
+    );
+    const futureInstagramPosts = allInstagramPosts.filter((post) =>
+      moment(post.tobePublishedAt).isAfter(currentDate)
+    );
+    const futureLinkedinPosts = allLinkedinPosts.filter((post) =>
+      moment(post.tobePublishedAt).isAfter(currentDate)
+    );
 
-    console.log('\n=== Future Posts Summary ===');
+    console.log("\n=== Future Posts Summary ===");
     console.log(`Future Twitter Posts: ${futureTwitterPosts.length}`);
     console.log(`Future Instagram Posts: ${futureInstagramPosts.length}`);
     console.log(`Future LinkedIn Posts: ${futureLinkedinPosts.length}`);
-    console.log('=========================\n');
+    console.log("=========================\n");
 
     // Get unpublished posts for all platforms that are due now
     const [twitterPosts, instagramPosts, linkedinPosts] = await Promise.all([
@@ -89,6 +96,7 @@ const cronPublishPosts = async () => {
         });
 
         post.isPublished = true;
+        post.status = "published";
         await post.save();
         await NotifyPublishPost(post, "Twitter");
       } catch (error) {
@@ -120,6 +128,7 @@ const cronPublishPosts = async () => {
         );
 
         post.isPublished = true;
+        post.status = "published";
         await post.save();
         await NotifyPublishPost(post, "Instagram");
       } catch (error) {
@@ -130,23 +139,77 @@ const cronPublishPosts = async () => {
     // Publish LinkedIn posts
     for (const post of linkedinPosts) {
       try {
+        let postData = {
+          author: `urn:li:person:${credentials.personId}`,
+          lifecycleState: "PUBLISHED",
+          specificContent: {
+            "com.linkedin.ugc.ShareContent": {
+              shareCommentary: {
+                text: post.text
+              },
+              shareMediaCategory: post.img ? "IMAGE" : "NONE"
+            }
+          },
+          visibility: {
+            "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC"
+          }
+        };
+
+        if (post.img) {
+          // Download image for LinkedIn upload
+          const imageResponse = await axios.get(post.img, {
+            responseType: "arraybuffer",
+          });
+          const downloadedImageBuffer = imageResponse.data;
+
+          // Register image with LinkedIn
+          const registerImageResponse = await axios.post(
+            'https://api.linkedin.com/v2/assets?action=registerUpload',
+            {
+              registerUploadRequest: {
+                recipes: ["urn:li:digitalmediaRecipe:feedshare-image"],
+                owner: `urn:li:person:${credentials.personId}`,
+                serviceRelationships: [{
+                  relationshipType: "OWNER",
+                  identifier: "urn:li:userGeneratedContent"
+                }]
+              }
+            },
+            {
+              headers: {
+                'Authorization': `Bearer ${credentials.accessToken}`,
+                'Content-Type': 'application/json',
+              }
+            }
+          );
+
+          const uploadUrl = registerImageResponse.data.value.uploadMechanism['com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest'].uploadUrl;
+          const asset = registerImageResponse.data.value.asset;
+
+          // Upload image to LinkedIn
+          await axios.put(uploadUrl, downloadedImageBuffer, {
+            headers: {
+              'Authorization': `Bearer ${credentials.accessToken}`,
+              'Content-Type': 'application/octet-stream',
+            }
+          });
+
+          // Add media to post data
+          postData.specificContent["com.linkedin.ugc.ShareContent"].media = [{
+            status: "READY",
+            description: {
+              text: "Post image"
+            },
+            media: asset,
+            title: {
+              text: "Post image"
+            }
+          }];
+        }
+
         await axios.post(
           "https://api.linkedin.com/v2/ugcPosts",
-          {
-            author: `urn:li:person:${credentials.personId}`,
-            lifecycleState: "PUBLISHED",
-            specificContent: {
-              "com.linkedin.ugc.ShareContent": {
-                shareCommentary: {
-                  text: post.text,
-                },
-                shareMediaCategory: "NONE",
-              },
-            },
-            visibility: {
-              "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC",
-            },
-          },
+          postData,
           {
             headers: {
               Authorization: `Bearer ${credentials.accessToken}`,
@@ -157,6 +220,7 @@ const cronPublishPosts = async () => {
         );
 
         post.isPublished = true;
+        post.status = "published";
         await post.save();
         await NotifyPublishPost(post, "LinkedIn");
       } catch (error) {
@@ -172,6 +236,4 @@ const cronPublishPosts = async () => {
 module.exports = { cronPublishPosts };
 
 // Run every 5 minutes
-cron.schedule("*/5 * * * *", cronPublishPosts, {
-  timezone: "Asia/Kolkata",
-});
+cron.schedule("*/5 * * * *", cronPublishPosts);

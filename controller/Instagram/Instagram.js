@@ -10,6 +10,7 @@ const dotenv = require("dotenv");
 const path = require("path");
 const axios = require("axios"); // Ensure axios is imported
 const UploadImage = require("../../utils/cloud/UploadImage");
+const DeleteImage = require("../../utils/cloud/DeleteImage");
 
 const envFile = process.env.SOCIAL_MEDIA_ENV;
 dotenv.config({ path: envFile });
@@ -18,23 +19,6 @@ const config = {
   apiVersion: "v21.0",
   accessToken: process.env.INSTAGRAM_ACCESS_TOKEN,
   businessAccountId: process.env.INSTAGRAM_BUSINESS_ACCOUNT_ID,
-};
-
-exports.GetAllPosts = async (req, res) => {
-  try {
-    const posts = await InstagramPost.find().sort({ createdAt: -1 });
-
-    res.status(200).json({
-      success: true,
-      posts,
-    });
-  } catch (error) {
-    console.error("Error in GetAllPosts:", error);
-    res.status(500).json({
-      success: false,
-      error: "Failed to fetch posts",
-    });
-  }
 };
 
 exports.InstantPost = async (req, res) => {
@@ -140,8 +124,9 @@ exports.InstantPost = async (req, res) => {
 
     const post = new InstagramPost({
       text: caption,
-      tobePublishedAt: moment().tz("Asia/Kolkata").toDate(),
+      tobePublishedAt: moment().utc().toDate(),
       isPublished: true,
+      status: "published",
       img: imageurl,
     });
 
@@ -158,6 +143,226 @@ exports.InstantPost = async (req, res) => {
     res.status(500).json({
       success: false,
       error: "Failed to create post. Please try again later.",
+    });
+  }
+};
+
+exports.GetAllPosts = async (req, res) => {
+  try {
+    const posts = await InstagramPost.find().sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      posts,
+    });
+  } catch (error) {
+    console.error("Error in GetAllPosts:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to fetch posts",
+    });
+  }
+};
+
+exports.EditPost = async (req, res) => {
+  try {
+    const { id, text, tobePublishedAt } = req.body;
+    const files = req.files;
+    
+    const post = await InstagramPost.findById(id);
+    if (!post) {
+      return res.status(404).json({ 
+        success: false, 
+        message: "Post not found" 
+      });
+    }
+
+    if (post.status === "published") {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Published post cannot be edited" 
+      });
+    }
+
+    // If new image is uploaded, delete old image and upload new one
+    if (files && files.img && files.img[0]) {
+      if (post.img) {
+        await DeleteImage(post.img);
+      }
+      const fileName = `post-${Date.now()}.jpg`;
+      const imageUrl = await UploadImage(files.img[0].buffer, fileName, "instagram");
+      post.img = imageUrl;
+    }
+
+    post.text = text;
+    if (tobePublishedAt) {
+      post.tobePublishedAt = tobePublishedAt;
+    }
+    await post.save();
+    
+    return res.status(200).json({
+      success: true,
+      message: "Post updated successfully"
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to update post. Please try again later."
+    });
+  }
+};
+
+exports.DeletePost = async (req, res) => {
+  try {
+    const { id } = req.body;
+    const post = await InstagramPost.findById(id);
+    
+    if (!post) {
+      return res.status(404).json({
+        success: false,
+        message: "Post not found"
+      });
+    }
+
+    // Delete image from Firebase if exists
+    if (post.img) {
+      await DeleteImage(post.img);
+    }
+
+    await InstagramPost.findByIdAndDelete(id);
+    
+    return res.status(200).json({
+      success: true,
+      message: "Post deleted successfully"
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to delete post. Please try again later."
+    });
+  }
+};
+
+exports.CreatePost = async (req, res) => {
+  try {
+    const { text, tobePublishedAt, action, prompt } = req.body;
+    const files = req.files;
+    let postContent, imageUrl, caption;
+
+    if (action === "automated") {
+      const staticPrompt = `
+        Create an engaging Instagram post about web development and SEO.
+        
+        Requirements:
+        - Professional and engaging tone
+        - Include 2-3 key insights or takeaways
+        - Use emojis appropriately
+        - Include relevant hashtags
+        - Keep it concise and visually appealing
+        - Add a clear call-to-action
+        
+        Format:
+        [Hook/Attention grabber]
+        
+        [Main content with insights]
+        
+        [Key points with emojis]
+        
+        [CTA]
+        
+        [Hashtags]
+        
+        Return ONLY the post text, nothing else.
+      `;
+
+      postContent = await GeneratePostContent(staticPrompt);
+      if (!postContent) {
+        return res.status(400).json({
+          success: false,
+          message: "Failed to generate content"
+        });
+      }
+
+      const imageBuffer = await CreateImage(postContent);
+      const fileName = `post-${Date.now()}.jpg`;
+      imageUrl = await UploadImage(imageBuffer, fileName, "instagram");
+      caption = await GenerateCaption(postContent);
+
+    } else if (action === "manual") {
+      if (!text || !files?.img?.[0]) {
+        return res.status(400).json({
+          success: false,
+          message: "Both text and image are required"
+        });
+      }
+      postContent = text;
+      caption = text;
+      const fileName = `post-${Date.now()}.jpg`;
+      imageUrl = await UploadImage(files.img[0].buffer, fileName, "instagram");
+
+    } else if (action === "only-automate-content-with-prompt") {
+      if (!prompt || !files?.img?.[0]) {
+        return res.status(400).json({
+          success: false,
+          message: "Both prompt and image are required"
+        });
+      }
+      postContent = await GeneratePostContent(prompt);
+      caption = await GenerateCaption(postContent);
+      const fileName = `post-${Date.now()}.jpg`;
+      imageUrl = await UploadImage(files.img[0].buffer, fileName, "instagram");
+
+    } else if (action === "only-automate-image-with-prompt") {
+      if (!text || !prompt) {
+        return res.status(400).json({
+          success: false,
+          message: "Both text and image prompt are required"
+        });
+      }
+      postContent = text;
+      caption = text;
+      const imageBuffer = await CreateImage(prompt);
+      const fileName = `post-${Date.now()}.jpg`;
+      imageUrl = await UploadImage(imageBuffer, fileName, "instagram");
+
+    } else if (action === "automate-with-prompt") {
+      if (!prompt) {
+        return res.status(400).json({
+          success: false,
+          message: "Prompt is required"
+        });
+      }
+      postContent = await GeneratePostContent(prompt);
+      caption = await GenerateCaption(postContent);
+      const imageBuffer = await CreateImage(prompt);
+      const fileName = `post-${Date.now()}.jpg`;
+      imageUrl = await UploadImage(imageBuffer, fileName, "instagram");
+    }
+
+    const post = new InstagramPost({
+      text: caption,
+      tobePublishedAt: tobePublishedAt || moment().utc().toDate(),
+      isPublished: false,
+      img: imageUrl,
+      status: "scheduled"
+    });
+
+    await post.save();
+    NotifyCreatePost(post);
+
+    return res.status(201).json({
+      success: true,
+      message: "Post created successfully",
+      post
+    });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to create post. Please try again later."
     });
   }
 };

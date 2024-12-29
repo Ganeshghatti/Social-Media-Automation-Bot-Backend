@@ -55,21 +55,112 @@ const cronLinkedInPosts = async (time) => {
       console.log("Post content generated successfully:", postContent);
 
       const publishTime = moment()
-        .tz("Asia/Kolkata")
-        // .add(1, "days")
+        .add(1, "days")
         .set({
           hour: t.publishedAt[0],
           minute: t.publishedAt[1],
           second: t.publishedAt[2],
           millisecond: t.publishedAt[3],
         })
-        .utcOffset("+05:30", true)
         .toDate();
+
+      const imagePrompt = `Create a professional LinkedIn banner image that represents ${postContent.substring(
+        0,
+        100
+      )}. Ensure no text in image. Keep one object in center and create clean background.`;
+      const imageBuffer = await GenerateImage(imagePrompt);
+      const fileName = `post-${Date.now()}.jpg`;
+      const imageUrl = await UploadImage(imageBuffer, fileName, "linkedin");
+
+      // Download and register image with LinkedIn
+      const imageResponse = await axios.get(imageUrl, {
+        responseType: "arraybuffer",
+      });
+      const downloadedImageBuffer = imageResponse.data;
+
+      // Register image with LinkedIn (same code as InstantPost)
+      const registerImageResponse = await axios.post(
+        "https://api.linkedin.com/v2/assets?action=registerUpload",
+        {
+          registerUploadRequest: {
+            recipes: ["urn:li:digitalmediaRecipe:feedshare-image"],
+            owner: `urn:li:person:${credentials.personId}`,
+            serviceRelationships: [
+              {
+                relationshipType: "OWNER",
+                identifier: "urn:li:userGeneratedContent",
+              },
+            ],
+          },
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${credentials.accessToken}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      const uploadUrl =
+        registerImageResponse.data.value.uploadMechanism[
+          "com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest"
+        ].uploadUrl;
+      const asset = registerImageResponse.data.value.asset;
+
+      // Upload image to LinkedIn
+      await axios.put(uploadUrl, downloadedImageBuffer, {
+        headers: {
+          Authorization: `Bearer ${credentials.accessToken}`,
+          "Content-Type": "application/octet-stream",
+        },
+      });
+
+      const postData = {
+        author: `urn:li:person:${credentials.personId}`,
+        lifecycleState: "PUBLISHED",
+        specificContent: {
+          "com.linkedin.ugc.ShareContent": {
+            shareCommentary: {
+              text: postContent,
+            },
+            shareMediaCategory: "IMAGE",
+            media: [
+              {
+                status: "READY",
+                description: {
+                  text: "Post image",
+                },
+                media: asset,
+                title: {
+                  text: "Post image",
+                },
+              },
+            ],
+          },
+        },
+        visibility: {
+          "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC",
+        },
+      };
+
+      const response = await axios.post(
+        "https://api.linkedin.com/v2/ugcPosts",
+        postData,
+        {
+          headers: {
+            Authorization: `Bearer ${credentials.accessToken}`,
+            "Content-Type": "application/json",
+            "X-Restli-Protocol-Version": "2.0.0",
+          },
+        }
+      );
 
       const post = new LinkedInPost({
         text: postContent,
+        img: imageUrl,
         tobePublishedAt: publishTime,
         isPublished: false,
+        status: "scheduled",
       });
 
       await post.save();
@@ -85,16 +176,10 @@ const cronLinkedInPosts = async (time) => {
 
 module.exports = { cronLinkedInPosts };
 
-cron.schedule(
-  "39 18 * * *",
-  () => {
-    // Times are in IST (UTC+5:30)
-    const time = [
-      { publishedAt: [6, 45, 0, 0] }, // 9:00 PM IST
-    ];
-    cronLinkedInPosts(time);
-  },
-  {
-    timezone: "Asia/Kolkata",
-  }
-);
+cron.schedule("39 18 * * *", () => {
+  // Times are in IST (UTC+5:30)
+  const time = [
+    { publishedAt: [18, 39, 0, 0] }, // 6:39 PM IST
+  ];
+  cronLinkedInPosts(time);
+});
