@@ -7,6 +7,8 @@ const NotifyCreatePost = require("../../utils/mail/NotifyCreatePost");
 const credentials = require("../../linkedin-credentials.json");
 const dotenv = require("dotenv");
 const axios = require("axios");
+const { GenerateImage } = require("../../utils/Linkedin/GenerateImage");
+const { UploadImage } = require("../../utils/cloud/UploadImage");
 
 const envFile = process.env.SOCIAL_MEDIA_ENV;
 dotenv.config({ path: envFile });
@@ -176,7 +178,7 @@ const cronLinkedInPosts = async (time) => {
 
 module.exports = { cronLinkedInPosts };
 
-cron.schedule("39 18 * * *", () => {
+cron.schedule("44 18 * * *", () => {
   // Times are in IST (UTC+5:30)
   const time = [
     { publishedAt: [18, 39, 0, 0] }, // 6:39 PM IST
