@@ -26,7 +26,7 @@ router.route("/twitter/delete-post").delete(requireAuth, DeletePost);
 router.route("/twitter/get-posts-by-date/:date").get(requireAuth, GetPostsByDate);
 
 router.route("/twitter/auth").get(requireAuth, GetAuthUrl);
-router.route("/twitter/callback").get(requireAuth, HandleCallback);
+router.route("/twitter/callback").get(HandleCallback);
 router.route("/twitter/disconnect").post(requireAuth, DisconnectTwitter);
 
 module.exports = router;

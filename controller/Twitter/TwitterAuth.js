@@ -9,10 +9,14 @@ exports.GetAuthUrl = async (req, res) => {
       appSecret: process.env.TWITTER_API_SECRET,
     });
 
+    // Include userId in state parameter
+    const state = req.user._id.toString();
+    
     const authLink = await client.generateAuthLink(
       `${process.env.BASE_URL}/twitter/callback`,
-      { linkMode: "authorize" }
+      { linkMode: 'authorize' }
     );
+
     if (!authLink) {
       return res.status(400).json({
         success: false,
@@ -33,8 +37,14 @@ exports.GetAuthUrl = async (req, res) => {
         },
       });
     }
-    user.credentials.twitter.twitterOAuthToken = authLink.oauth_token;
-    user.credentials.twitter.twitterOAuthSecret = authLink.oauth_token_secret;
+
+    // Store tokens in user document
+    user.credentials.twitter = {
+      ...user.credentials.twitter,
+      twitterOAuthToken: authLink.oauth_token,
+      twitterOAuthSecret: authLink.oauth_token_secret,
+      state: state
+    };
     await user.save();
 
     res.json({
@@ -48,8 +58,8 @@ exports.GetAuthUrl = async (req, res) => {
       error: {
         message: "An unexpected error occurred. Please try again later.",
         code: 500,
-        detail: error.message,
-      },
+        detail: error.message
+      }
     });
   }
 };
@@ -58,8 +68,10 @@ exports.HandleCallback = async (req, res) => {
   try {
     const { oauth_token, oauth_verifier } = req.query;
 
-    // Get the user and their stored OAuth secret
-    const user = await User.findById(req.user._id);
+    // Find user by oauth_token
+    const user = await User.findOne({
+      'credentials.twitter.twitterOAuthToken': oauth_token
+    });
 
     if (!user || !user.credentials.twitter.twitterOAuthSecret) {
       return res.status(400).json({
@@ -88,11 +100,10 @@ exports.HandleCallback = async (req, res) => {
       userId,
       username: screenName,
       isConnected: true,
+      twitterOAuthToken: undefined,
+      twitterOAuthSecret: undefined,
+      state: undefined
     };
-
-    // Clear temporary OAuth tokens
-    user.credentials.twitter.twitterOAuthToken = undefined;
-    user.credentials.twitter.twitterOAuthSecret = undefined;
 
     await user.save();
 
