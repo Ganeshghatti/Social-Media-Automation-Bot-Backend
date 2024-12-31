@@ -1,5 +1,5 @@
 const { GoogleGenerativeAI } = require("@google/generative-ai");
-require('dotenv').config({ path: `.env.${process.env.NODE_ENV}` })
+require('dotenv').config()
 
 const GenerateContent = async (prompt) => {
   try {

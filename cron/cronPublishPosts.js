@@ -8,7 +8,7 @@ const LinkedinPosts = require("../models/LinkedinPosts");
 const NotifyPublishPost = require("../utils/mail/NotifyPublishPost");
 const NotifyError = require("../utils/mail/NotifyError");
 const credentials = require("../linkedin-credentials.json");
-require('dotenv').config({ path: `.env.${process.env.NODE_ENV}` })
+require('dotenv').config()
 // Twitter client setup
 const TwitterClient = new TwitterApi({
   appKey: process.env.TWITTER_API_KEY,
