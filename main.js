@@ -1,12 +1,8 @@
 const path = require('path');
 // Set default NODE_ENV if not set
-console.log(process.env.NODE_ENV);
-console.log(path.resolve(__dirname, process.env.NODE_ENV ? `.env.${process.env.NODE_ENV}` : '.env.development'));
-console.log(path.resolve(__dirname, '.env.development'));
 require('dotenv').config({ 
   path: path.resolve(__dirname, process.env.NODE_ENV ? `.env.${process.env.NODE_ENV}` : '.env.development')
 });
-console.log(process.env.NODE_ENV);
 
 const express = require("express");
 const connectDatabase = require("./config/database");
@@ -43,9 +39,7 @@ app.get("/", (req, res) => {
 });
 
 connectDatabase();
-console.log(process.env.NODE_ENV);
 console.log(moment());
-
 // Start the server
 const PORT = process.env.PORT || 5000;
 const server = app.listen(PORT, () => {
