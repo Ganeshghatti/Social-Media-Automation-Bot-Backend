@@ -1,11 +1,4 @@
-const dotenv = require('dotenv');
-const path = require('path');
-
-// Load environment variables conditionally based on the environment
-const envFile = process.env.NODE_ENV === 'production' ? '.env.production' : '.env.development';
-dotenv.config({ path: path.resolve(process.cwd(), envFile) });
-console.log(`Loaded ${envFile} environment variables`);
-
+require('dotenv').config({ path: `.env.${process.env.NODE_ENV}` })
 const express = require("express");
 const connectDatabase = require("./config/database");
 const cors = require("cors");
