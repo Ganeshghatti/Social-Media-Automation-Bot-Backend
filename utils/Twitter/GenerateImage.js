@@ -1,7 +1,4 @@
 const axios = require('axios');
-const dotenv = require("dotenv");
-
-dotenv.config();
 
 const GenerateImage = async (prompt) => {
   try {

@@ -6,14 +6,10 @@ const GeneratePostContent = require("../../utils/Instagram/GeneratePostContent")
 const CreateImage = require("../../utils/Instagram/CreateImage");
 const NotifyError = require("../../utils/mail/NotifyError");
 const NotifyInstantPost = require("../../utils/mail/NotifyInstantPost");
-const dotenv = require("dotenv");
 const path = require("path");
 const axios = require("axios"); // Ensure axios is imported
 const UploadImage = require("../../utils/cloud/UploadImage");
 const DeleteImage = require("../../utils/cloud/DeleteImage");
-
-const envFile = process.env.SOCIAL_MEDIA_ENV;
-dotenv.config({ path: envFile });
 
 const config = {
   apiVersion: "v21.0",
@@ -23,8 +19,6 @@ const config = {
 
 exports.InstantPost = async (req, res) => {
   try {
-    console.log("Starting...");
-
     const prompt =
       "Create an engaging Instagram post about the importance of SEO, highlighting its benefits in 3-4 concise points.";
     const selectionResponse = await GeneratePostContent(prompt);

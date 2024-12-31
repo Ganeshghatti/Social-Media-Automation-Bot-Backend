@@ -9,10 +9,6 @@ const axios = require("axios");
 const UploadImage = require("../../utils/cloud/UploadImage");
 const GenerateCaption = require("../../utils/Instagram/GenerateCaption");
 const NotifyError = require("../../utils/mail/NotifyError");
-const dotenv = require("dotenv");
-
-const envFile = process.env.SOCIAL_MEDIA_ENV;
-dotenv.config({ path: envFile });
 
 const config = {
   apiVersion: "v21.0",

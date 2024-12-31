@@ -1,3 +1,14 @@
+const dotenv = require('dotenv');
+const path = require('path');
+
+// Determine which environment file to load
+const isProduction = process.env.HOST?.includes('pilot.thesquirrel.site');
+const envFile = isProduction ? '.env' : '.env.development';
+
+// Load environment variables
+dotenv.config({ path: path.resolve(process.cwd(), envFile) });
+console.log(`Loaded ${envFile} environment variables`);
+
 const express = require("express");
 const connectDatabase = require("./config/database");
 const cors = require("cors");
@@ -8,7 +19,6 @@ const linkedinRoutes = require("./routes/Linkedin/Linkedin");
 const instagramRoutes = require("./routes/Instagram/Instagram");
 const dashboardRoutes = require("./routes/Dashboard/Dashboard");
 const userRoutes = require("./routes/User/User");
-const dotenv = require("dotenv");
 const moment = require("moment");
 const momentTimezone = require("moment-timezone");
 const { cronPublishPosts } = require("./cron/cronPublishPosts");
@@ -16,8 +26,6 @@ const { cronInstagramPosts } = require("./cron/Instagram/cronInstagramPosts");
 const { cronTwitterPosts } = require("./cron/Twitter/cronTwitterPosts");
 const { cronLinkedInPosts } = require("./cron/LinkedIn/cronLinkedInPosts");
 
-const envFile = process.env.SOCIAL_MEDIA_ENV;
-dotenv.config({ path: envFile });
 const app = express();
 
 // Middleware setup
@@ -41,7 +49,7 @@ connectDatabase();
 console.log(moment());
 
 // Start the server
-const PORT = process.env.PORT || 5000; // Default to 5000 if PORT is not set
+const PORT = process.env.PORT || 5000;
 const server = app.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);
 });

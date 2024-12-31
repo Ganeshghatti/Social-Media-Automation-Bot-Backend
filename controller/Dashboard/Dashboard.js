@@ -210,13 +210,17 @@ exports.GetDashboardStats = async (req, res) => {
 
     res.status(200).json({
       success: true,
+      message: "Dashboard statistics fetched successfully",
       data: dashboardStats
     });
   } catch (error) {
-    console.error('Dashboard Error:', error);
     res.status(500).json({
       success: false,
-      error: "Failed to fetch dashboard statistics"
+      error:{
+        message: "We encountered an issue while fetching the dashboard statistics. Please try again later.",
+        code: 500,
+        detail: error.message
+      }
     });
   }
 };

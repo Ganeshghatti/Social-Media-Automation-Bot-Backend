@@ -1,8 +1,4 @@
 const mongoose = require("mongoose");
-const dotenv = require("dotenv");
-
-const envFile = process.env.SOCIAL_MEDIA_ENV;
-dotenv.config({ path: envFile });
 
 const connectdatabase = async () => {
   try {

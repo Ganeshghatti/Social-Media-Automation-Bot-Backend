@@ -1,10 +1,5 @@
 const path = require("path");
-const dotenv = require("dotenv");
 const { createCanvas, loadImage } = require("canvas");
-const UploadImage = require("../cloud/UploadImage");
-
-const envFile = process.env.SOCIAL_MEDIA_ENV;
-dotenv.config({ path: envFile });
 
 const templatePath = path.join(__dirname, '..', '..', 'templates', 'Instagram', 'DemoTemplate.png');
 

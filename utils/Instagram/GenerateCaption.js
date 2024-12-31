@@ -1,8 +1,4 @@
 const { GoogleGenerativeAI } = require("@google/generative-ai");
-const dotenv = require("dotenv");
-
-const envFile = process.env.SOCIAL_MEDIA_ENV;
-dotenv.config({ path: envFile });
 
 const GenerateCaption = async (prompt) => {
   try {

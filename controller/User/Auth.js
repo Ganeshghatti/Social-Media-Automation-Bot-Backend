@@ -1,5 +1,4 @@
 const userModel = require("../../models/User");
-const dotenv = require("dotenv");
 const VerificationEmail = require("../../utils/mail/VerificationEmail");
 const validator = require("validator");
 const moment = require("moment");
@@ -8,31 +7,43 @@ const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
 const PasswordResetEmail = require("../../utils/mail/PasswordResetEmail");
 
-const envFile = process.env.SOCIAL_MEDIA_ENV;
-dotenv.config({ path: envFile });
-
 exports.Signup = async (req, res, next) => {
   const userdata = req.body;
 
   try {
     if (!validator.isEmail(userdata.email)) {
-      return res.status(400).json({ error: "Invalid email address" });
+      return res.status(400).json({
+        success: false,
+        error: {
+          message: "Please provide a valid email address.",
+          code: 400,
+        },
+      });
     }
+
     if (!validator.isStrongPassword(userdata.password)) {
       return res.status(400).json({
-        error:
-          "Weak password. Must be at least 8 characters long and include at least one uppercase letter, one lowercase letter, one number, and one special character.",
+        success: false,
+        error: {
+          message:
+            "Your password is too weak. It should be at least 8 characters long and include uppercase letters, lowercase letters, numbers, and special characters.",
+          code: 400,
+        },
       });
     }
 
     const existingUser = await userModel.findOne({ email: userdata.email });
 
-    // If user exists and not in draft mode
     if (existingUser) {
-      return res.status(400).json({ error: "User already exists" });
+      return res.status(400).json({
+        success: false,
+        error: {
+          message: "An account with this email already exists.",
+          code: 400,
+        },
+      });
     }
 
-    // Create new user
     const salt = await bcrypt.genSalt(10);
     const hash = await bcrypt.hash(userdata.password, salt);
     const verificationToken = crypto.randomBytes(32).toString("hex");
@@ -47,7 +58,7 @@ exports.Signup = async (req, res, next) => {
       verificationExpires: new Date(Date.now() + 24 * 60 * 60 * 1000),
       createdAt: moment(),
     });
-    console.log(verificationToken);
+
     const newUser = await user.save();
 
     try {
@@ -57,47 +68,70 @@ exports.Signup = async (req, res, next) => {
         newUser.verificationToken
       );
     } catch (error) {
-      res.status(500).json({ error: "Failed to send verification email" });
+      res.status(500).json({
+        success: false,
+        error: {
+          message: "We encountered an issue sending the verification email. Please try again later.",
+          code: 500,
+        },
+      });
     }
 
     res.status(200).json({
+      success: true,
       message:
-        "Registration successful. Please check your email to verify your account.",
-      email: newUser.email,
-      username: newUser.username,
+        "Registration successful! Please check your email to verify your account."
     });
   } catch (error) {
-    console.error("Registration error:", error);
-    res.status(500).json({ error: "Failed to register user" });
+    res.status(500).json({
+      success: false,
+      error: {
+        message: "There was a problem creating your account. Please try again.",
+        code: 500,
+        detail: error.message,
+      },
+    });
   }
 };
 
 exports.VerifyEmail = async (req, res, next) => {
   try {
     const { token } = req.params;
-    console.log(token);
+
     const user = await userModel.findOne({
       verificationToken: token,
       verificationExpires: { $gt: Date.now() },
       status: "pending",
     });
-    console.log(user);
+    
     if (!user) {
-      return res
-        .status(400)
-        .json({ error: "Invalid or expired verification token" });
+      return res.status(400).json({
+        success: false,
+        error: {
+          message: "The verification token is invalid or has expired.",
+          code: 400,
+        },
+      });
     }
 
-    // Update user status and clear verification fields
     user.status = "verified";
     user.verificationToken = undefined;
     user.verificationExpires = undefined;
     await user.save();
 
-    res.status(200).json({ message: "Email verified successfully" });
+    res.status(200).json({
+      success: true,
+      message: "Your email has been verified successfully!",
+    });
   } catch (error) {
-    console.error("Verification error:", error);
-    res.status(500).json({ error: "Failed to verify email" });
+    res.status(500).json({
+      success: false,
+      error: {
+        message: "Failed to verify your email. Please try again.",
+        code: 500,
+        detail: error.message,
+      },
+    });
   }
 };
 
@@ -106,21 +140,45 @@ exports.Login = async (req, res) => {
     const { email, password } = req.body;
 
     if (!email || !validator.isEmail(email)) {
-      return res.status(400).json({ error: "Invalid email address" });
+      return res.status(400).json({
+        success: false,
+        error: {
+          message: "Please provide a valid email address.",
+          code: 400,
+        },
+      });
     }
 
     const user = await userModel.findOne({ email });
     if (!user) {
-      return res.status(401).json({ error: "Invalid email or password" });
+      return res.status(401).json({
+        success: false,
+        error: {
+          message: "Invalid email or password. Please try again.",
+          code: 401,
+        },
+      });
     }
 
     if (user.status !== "verified") {
-      return res.status(401).json({ error: "Please verify your email first" });
+      return res.status(401).json({
+        success: false,
+        error: {
+          message: "Please verify your email before logging in.",
+          code: 401,
+        },
+      });
     }
 
     const match = await bcrypt.compare(password, user.password);
     if (!match) {
-      return res.status(401).json({ error: "Invalid email or password" });
+      return res.status(401).json({
+        success: false,
+        error: {
+          message: "Invalid email or password. Please try again.",
+          code: 401,
+        },
+      });
     }
 
     const token = jwt.sign(
@@ -129,12 +187,21 @@ exports.Login = async (req, res) => {
     );
 
     res.status(200).json({
-      message: "Login successful",
-      token,
+      success: true,
+      message: "Login successful!",
+      data: {
+        token,
+      },
     });
   } catch (error) {
-    console.error("Login error:", error);
-    res.status(500).json({ error: "An error occurred during login" });
+    res.status(500).json({
+      success: false,
+      error: {
+        message: "An error occurred during login. Please try again.",
+        code: 500,
+        detail: error.message,
+      },
+    });
   }
 };
 
@@ -143,12 +210,24 @@ exports.ForgotPassword = async (req, res) => {
     const { email } = req.body;
 
     if (!email || !validator.isEmail(email)) {
-      return res.status(400).json({ error: "Invalid email address" });
+      return res.status(400).json({
+        success: false,
+        error: {
+          message: "Please provide a valid email address.",
+          code: 400,
+        },
+      });
     }
 
     const user = await userModel.findOne({ email });
     if (!user) {
-      return res.status(404).json({ error: "User not found" });
+      return res.status(404).json({
+        success: false,
+        error: {
+          message: "No account found with this email address.",
+          code: 404,
+        },
+      });
     }
 
     const resetToken = crypto.randomBytes(32).toString("hex");
@@ -159,15 +238,28 @@ exports.ForgotPassword = async (req, res) => {
     try {
       await PasswordResetEmail(user.email, user.username, resetToken);
     } catch (error) {
-      res.status(500).json({ error: "Failed to send password reset email" });
+      res.status(500).json({
+        success: false,
+        error: {
+          message: "We encountered an issue sending the password reset email. Please try again later.",
+          code: 500,
+        },
+      });
     }
 
     res.status(200).json({
-      message: "Password reset link has been sent to your email",
+      success: true,
+      message: "A password reset link has been sent to your email.",
     });
   } catch (error) {
-    console.error("Forgot password error:", error);
-    res.status(500).json({ error: "Failed to process password reset request" });
+    res.status(500).json({
+      success: false,
+      error: {
+        message: "Failed to process your password reset request. Please try again.",
+        code: 500,
+        detail: error.message,
+      },
+    });
   }
 };
 
@@ -177,8 +269,11 @@ exports.ResetPassword = async (req, res) => {
 
     if (!validator.isStrongPassword(newPassword)) {
       return res.status(400).json({
-        error:
-          "Password must be at least 8 characters long and include uppercase, lowercase, number and special character",
+        success: false,
+        error: {
+          message: "Your new password must be strong and meet the required criteria.",
+          code: 400,
+        },
       });
     }
 
@@ -188,7 +283,13 @@ exports.ResetPassword = async (req, res) => {
     });
 
     if (!user) {
-      return res.status(400).json({ error: "Invalid or expired reset token" });
+      return res.status(400).json({
+        success: false,
+        error: {
+          message: "The reset token is invalid or has expired.",
+          code: 400,
+        },
+      });
     }
 
     const salt = await bcrypt.genSalt(10);
@@ -199,9 +300,18 @@ exports.ResetPassword = async (req, res) => {
     user.resetPasswordExpires = undefined;
     await user.save();
 
-    res.status(200).json({ message: "Password has been reset successfully" });
+    res.status(200).json({
+      success: true,
+      message: "Your password has been reset successfully!",
+    });
   } catch (error) {
-    console.error("Reset password error:", error);
-    res.status(500).json({ error: "Failed to reset password" });
+    res.status(500).json({
+      success: false,
+      error: {
+        message: "Failed to reset your password. Please try again.",
+        code: 500,
+        detail: error.message,
+      },
+    });
   }
 };

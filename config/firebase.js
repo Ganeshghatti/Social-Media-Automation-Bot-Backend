@@ -1,9 +1,5 @@
 const { initializeApp } = require("firebase/app");
 const { getStorage } = require("firebase/storage");
-const dotenv = require("dotenv");
-
-const envFile = process.env.SOCIAL_MEDIA_ENV;
-dotenv.config({ path: envFile });
 
 const firebaseConfig = {
   apiKey: process.env.FIREBASE_API_KEY,

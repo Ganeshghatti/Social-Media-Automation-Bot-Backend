@@ -1,7 +1,4 @@
 const { GoogleGenerativeAI } = require("@google/generative-ai");
-const dotenv = require("dotenv");
-
-dotenv.config(); // Updated to load from root directory
 
 const GenerateContent = async (prompt) => {
   try {

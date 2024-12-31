@@ -48,8 +48,14 @@ const userSchema = new mongoose.Schema({
   },
   credentials: {
     twitter: {
-
-    },
+      twitterOAuthToken: String,
+      twitterOAuthSecret: String,
+      accessToken: String,
+      accessSecret: String,
+      userId: String,
+      username: String,
+      isConnected: Boolean
+    }
   },
   status: {
     type: String,

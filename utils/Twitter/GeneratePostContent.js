@@ -1,21 +1,27 @@
-const { GoogleGenerativeAI } = require("@google/generative-ai");
-const dotenv = require("dotenv");
+const axios = require("axios");
 
-dotenv.config(); // Updated to load from root directory
-
-const GeneratePostContent = async (prompt) => {
+const GeneratePostContent = async (userSettings, prompt) => {
   try {
-    const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    console.log(userSettings);
 
-    // Generate text content
-    const result = await model.generateContent(prompt);
-    const response = result.response.text();
-    console.log("Response received");
+    const response = await axios.post(
+      `https://api.generate-content.thesquirrel.site/twitter/create-post/`,
+      {
+        keywords: userSettings.keywords,
+        prompt: prompt,
+        description: userSettings.description,
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
 
-    return response;
+    console.log("Response received", response.data.tweets.raw);
+    return response.data.tweets.raw;
   } catch (error) {
-    console.error("Error generating content:", error.message);
+    console.log("Error generating content:", error.message);
     throw error;
   }
 };

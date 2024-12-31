@@ -2,10 +2,6 @@ const validator = require("validator");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const userModel = require("../../models/User");
-const dotenv = require("dotenv");
-
-const envFile = process.env.SOCIAL_MEDIA_ENV;
-dotenv.config({ path: envFile });
 
 exports.AdminLogin = async (req, res, next) => {
   const { email, password } = req.body;
@@ -14,22 +10,37 @@ exports.AdminLogin = async (req, res, next) => {
     // Validate email
     if (!email || !validator.isEmail(email)) {
       return res.status(400).json({
-        error: "Please provide a valid email address.",
+        success: false,
+        error: {
+          message: "Please provide a valid email address.",
+          code: 400,
+          detail: "Email validation failed: Invalid email format."
+        },
       });
     }
 
-    const admin = await userModel.findOne({ email });
+    const admin = await userModel.findOne({ email, role: "admin" });
 
     if (!admin) {
       return res.status(401).json({
-        error: "Invalid email or password.",
+        success: false,
+        error: {
+          message: "Invalid email or password.",
+          code: 401,
+          detail: "Authentication failed: Admin user not found."
+        },
       });
     }
 
     const match = await bcrypt.compare(password, admin.password);
     if (!match) {
       return res.status(401).json({
-        error: "Invalid email or password.",
+        success: false,
+        error: {
+          message: "Invalid email or password.",
+          code: 401,
+          detail: "Authentication failed: Password mismatch."
+        },
       });
     }
 
@@ -39,13 +50,18 @@ exports.AdminLogin = async (req, res, next) => {
     );
 
     res.status(200).json({
+      success: true,
       message: "Login successful.",
       token: token,
     });
   } catch (error) {
-    console.log(error);
     res.status(500).json({
-      error: "An internal server error occurred. Please try again later.",
+      success: false,
+      error: {
+        message: "An internal server error occurred. Please try again later.",
+        code: 500,
+        detail: error.message,
+      },
     });
   }
 };

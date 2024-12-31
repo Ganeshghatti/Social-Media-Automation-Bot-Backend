@@ -1,35 +1,20 @@
 const mongoose = require("mongoose");
 
-const twitterPostsSchema = new mongoose.Schema({
-  text: {
-    type: String,
-    required: true,
-  },
-  img: {
-    type: String,
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
-  updatedAt: {
-    type: Date,
-    default: Date.now,
-  },
+const twitterPostSchema = new mongoose.Schema({
+  text: String,
+  img: String,
+  tobePublishedAt: Date,
+  isPublished: Boolean,
   status: {
     type: String,
-    default: "draft",
-    enum: ["draft", "scheduled", "published"],
+    enum: ["scheduled", "published", "failed"],
+    default: "scheduled"
   },
-  isPublished: {
-    type: Boolean,
-    default: false,
-  },
-  tobePublishedAt: {
-    type: Date,
-  },
-});
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  }
+}, { timestamps: true });
 
-const TwitterPosts = mongoose.model("TwitterPosts", twitterPostsSchema);
-
-module.exports = TwitterPosts;
+module.exports = mongoose.model("TwitterPost", twitterPostSchema);

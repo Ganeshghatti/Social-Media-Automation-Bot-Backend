@@ -1,10 +1,6 @@
 const axios = require('axios');
 const fs = require('fs').promises;
 const path = require('path');
-const dotenv = require("dotenv");
-
-const envFile = process.env.SOCIAL_MEDIA_ENV;
-dotenv.config({ path: envFile });
 
 console.log('Environment variables loaded.');
 

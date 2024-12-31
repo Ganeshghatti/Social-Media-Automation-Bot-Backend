@@ -6,12 +6,8 @@ const UploadImage = require("../../utils/cloud/UploadImage");
 const DeleteImage = require("../../utils/cloud/DeleteImage");
 const NotifyError = require("../../utils/mail/NotifyError");
 const NotifyInstantPost = require("../../utils/mail/NotifyInstantPost");
-const dotenv = require("dotenv");
 const credentials = require("../../linkedin-credentials.json");
 const axios = require("axios");
-
-const envFile = process.env.SOCIAL_MEDIA_ENV;
-dotenv.config({ path: envFile });
 
 exports.InstantPost = async (req, res, next) => {
   try {

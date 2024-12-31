@@ -1,23 +1,32 @@
 const userModel = require("../../models/User");
-const dotenv = require("dotenv");
 const UploadUserImg = require("../../utils/cloud/UploadUserImg");
 const DeleteUserImg = require("../../utils/cloud/DeleteUserImg");
-
-const envFile = process.env.SOCIAL_MEDIA_ENV;
-dotenv.config({ path: envFile });
 
 exports.EditSettings = async (req, res) => {
   try {
     const { keywords, description, username } = req.body;
 
     const keywordsArray = JSON.parse(keywords);
-    // Assuming keywords is already an array
+
     if (!Array.isArray(keywordsArray)) {
-      return res.status(400).json({ error: "Keywords must be an array." });
+      return res.status(400).json({
+        success: false,
+        error: {
+          message: "Please provide keywords.",
+          code: 400,
+        },
+      });
     }
     const user = await userModel.findById(req.user._id);
+
     if (!user) {
-      return res.status(404).json({ error: "User not found" });
+      return res.status(404).json({
+        success: false,
+        error: {
+          message: "We couldn't find your account.",
+          code: 404,
+        },
+      });
     }
 
     // Handle profile picture upload
@@ -38,24 +47,49 @@ exports.EditSettings = async (req, res) => {
     user.username = username;
 
     await user.save();
-    res.status(200).json({ message: "Settings updated successfully" });
+    res.status(200).json({
+      success: true,
+      message: "Your settings have been updated successfully.",
+    });
   } catch (error) {
-    console.error("Error updating settings:", error);
     res
       .status(500)
-      .json({ error: "An error occurred while updating settings" });
+      .json({
+        success: false,
+        error: {
+          message: "There was an issue updating your settings. Please try again.",
+          code: 500,
+          detail: error.message,
+        },
+      });
   }
 };
 
 exports.GetSettings = async (req, res) => {
   try {
-    const user = await userModel.findById(req.user._id).select('-password');
+    const user = await userModel.findById(req.user._id).select("-password");
     if (!user) {
-      return res.status(404).json({ error: "User not found" });
+      return res.status(404).json({
+        success: false,
+        error: {
+          message: "We couldn't find your account.",
+          code: 404,
+        },
+      });
     }
-    res.status(200).json(user);
+    res.status(200).json({
+      success: true,
+      message: "Your settings have been retrieved successfully.",
+      data: user,
+    });
   } catch (error) {
-    console.error("Error fetching user settings:", error);
-    res.status(500).json({ error: "Failed to fetch user settings" });
+    res.status(500).json({
+      success: false,
+      error: {
+        message: "Failed to retrieve your settings. Please try again later.",
+        code: 500,
+        detail: error.message,
+      },
+    });
   }
 };

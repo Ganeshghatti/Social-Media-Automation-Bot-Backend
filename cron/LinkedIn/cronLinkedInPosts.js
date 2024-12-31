@@ -5,13 +5,9 @@ const moment = require("moment");
 const NotifyError = require("../../utils/mail/NotifyError");
 const NotifyCreatePost = require("../../utils/mail/NotifyCreatePost");
 const credentials = require("../../linkedin-credentials.json");
-const dotenv = require("dotenv");
 const axios = require("axios");
 const { GenerateImage } = require("../../utils/Linkedin/GenerateImage");
 const { UploadImage } = require("../../utils/cloud/UploadImage");
-
-const envFile = process.env.SOCIAL_MEDIA_ENV;
-dotenv.config({ path: envFile });
 
 const cronLinkedInPosts = async (time) => {
   try {

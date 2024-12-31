@@ -8,10 +8,6 @@ const NotifyCreatePost = require("../../utils/mail/NotifyCreatePost");
 const axios = require("axios");
 const UploadImage = require("../../utils/cloud/UploadImage");
 const NotifyError = require("../../utils/mail/NotifyError");
-const dotenv = require("dotenv");
-
-const envFile = process.env.SOCIAL_MEDIA_ENV;
-dotenv.config({ path: envFile });
 
 const cronTwitterPosts = async (time) => {
   try {

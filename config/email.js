@@ -1,8 +1,4 @@
 const nodemailer = require("nodemailer");
-const dotenv = require("dotenv");
-
-const envFile = process.env.SOCIAL_MEDIA_ENV;
-dotenv.config({ path: envFile });
 
 const emailConfig = {
   host: process.env.SMTP_HOST,
