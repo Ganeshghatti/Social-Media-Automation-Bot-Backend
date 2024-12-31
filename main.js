@@ -16,7 +16,7 @@ const { cronTwitterPosts } = require("./cron/Twitter/cronTwitterPosts");
 const { cronLinkedInPosts } = require("./cron/LinkedIn/cronLinkedInPosts");
 
 const app = express();
-
+console.log(process.env.NODE_ENV, process.env.MONGODB_CONNECT_URI);
 // Middleware setup
 app.use(cors());
 app.use(express.json());
