@@ -7,6 +7,7 @@ const twitterRoutes = require("./routes/Twitter/Twitter");
 const linkedinRoutes = require("./routes/Linkedin/Linkedin");
 const instagramRoutes = require("./routes/Instagram/Instagram");
 const dashboardRoutes = require("./routes/Dashboard/Dashboard");
+const userRoutes = require("./routes/User/User");
 const dotenv = require("dotenv");
 const moment = require("moment");
 const momentTimezone = require("moment-timezone");
@@ -28,6 +29,7 @@ app.use(twitterRoutes);
 app.use(linkedinRoutes);
 app.use(instagramRoutes);
 app.use(dashboardRoutes);
+app.use(userRoutes);
 
 // Root route
 app.get("/", (req, res) => {

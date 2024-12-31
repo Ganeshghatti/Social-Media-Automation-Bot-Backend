@@ -35,7 +35,7 @@ exports.AdminLogin = async (req, res, next) => {
 
     const token = jwt.sign(
       { userId: admin._id, email: admin.email },
-      process.env.ADMINJWTSECRET
+      process.env.JWTSECRET
     );
 
     res.status(200).json({

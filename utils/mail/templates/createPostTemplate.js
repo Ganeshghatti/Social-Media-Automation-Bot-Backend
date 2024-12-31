@@ -40,4 +40,4 @@ const createPostEmailTemplate = (post) => {
   `;
 };
 
-module.exports = { createPostEmailTemplate }; 
+module.exports = createPostEmailTemplate; 

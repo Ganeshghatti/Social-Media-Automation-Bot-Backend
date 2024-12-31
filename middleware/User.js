@@ -1,5 +1,5 @@
 const jwt = require("jsonwebtoken");
-const adminModel = require("../models/User");
+const userModel = require("../models/User");
 
 const requireAuth = async (req, res, next) => {
   try {
@@ -15,17 +15,14 @@ const requireAuth = async (req, res, next) => {
     }
 
     const decodedToken = jwt.verify(token, process.env.JWTSECRET);
-    const adminId = decodedToken.userId;
+    const userId = decodedToken.userId;
 
-    const admin = await adminModel.findById(adminId);
+    const user = await userModel.findById(userId);
 
-    if (!admin) {
+    if (!user) {
       return res.status(401).json({ error: "Request is not authorized" });
     }
-    if (admin.role !== "admin") {
-      return res.status(401).json({ error: "Request is not authorized" });
-    }
-    req.user = admin;
+    req.user = user;
     next();
   } catch (error) {
     if (error.name === "TokenExpiredError") {

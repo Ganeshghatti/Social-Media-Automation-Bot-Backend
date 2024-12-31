@@ -1,5 +1,5 @@
 const transporter = require("../../config/email");
-const { createPostEmailTemplate } = require("./templates/createPostTemplate");
+const createPostEmailTemplate = require("./templates/createPostTemplate");
 const path = require("path");
 
 const NotifyCreatePost = async (post) => {

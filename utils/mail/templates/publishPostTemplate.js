@@ -50,4 +50,4 @@ const publishedPostEmailTemplate = (post) => {
   `;
 };
 
-module.exports = { publishedPostEmailTemplate }; 
+module.exports = publishedPostEmailTemplate; 
