@@ -1,5 +1,8 @@
 const path = require('path');
 // Set default NODE_ENV if not set
+console.log(process.env.NODE_ENV);
+console.log(path.resolve(__dirname, process.env.NODE_ENV ? `.env.${process.env.NODE_ENV}` : '.env.development'));
+console.log(path.resolve(__dirname, '.env.development'));
 require('dotenv').config({ 
   path: path.resolve(__dirname, process.env.NODE_ENV ? `.env.${process.env.NODE_ENV}` : '.env.development')
 });
