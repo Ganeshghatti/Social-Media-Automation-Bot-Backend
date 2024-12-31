@@ -34,7 +34,7 @@ app.get("/", (req, res) => {
 });
 
 connectDatabase();
-console.log(process.env.NODE_ENV, process.env.MONGODB_CONNECT_URI);
+console.log(process.env.NODE_ENV);
 console.log(moment());
 
 // Start the server
