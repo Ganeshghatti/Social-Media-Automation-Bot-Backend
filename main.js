@@ -1,11 +1,8 @@
 const dotenv = require('dotenv');
 const path = require('path');
 
-// Determine which environment file to load
-const isProduction = process.env.HOST?.includes('pilot.thesquirrel.site');
-const envFile = isProduction ? '.env' : '.env.development';
-
-// Load environment variables
+// Load environment variables conditionally based on the environment
+const envFile = process.env.NODE_ENV === 'production' ? '.env.production' : '.env.development';
 dotenv.config({ path: path.resolve(process.cwd(), envFile) });
 console.log(`Loaded ${envFile} environment variables`);
 
