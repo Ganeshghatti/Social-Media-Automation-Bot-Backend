@@ -1,6 +1,6 @@
 const transporter = require("../../config/email");
 const verificationEmailTemplate= require("./templates/VerificationEmail");
-require('dotenv').config()
+require('dotenv').config({ path: `.env.${process.env.NODE_ENV}` })
 const VerificationEmail = async (email,username, verificationToken) => {
   try {
     await transporter.sendMail({

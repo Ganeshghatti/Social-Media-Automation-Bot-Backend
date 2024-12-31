@@ -13,7 +13,7 @@ const axios = require("axios");
 const DeleteImage = require("../../utils/cloud/DeleteImage");
 const dotenv = require("dotenv");
 const User = require("../../models/User");
-require('dotenv').config()
+require('dotenv').config({ path: `.env.${process.env.NODE_ENV}` })
 
 exports.InstantPost = async (req, res, next) => {
   try {

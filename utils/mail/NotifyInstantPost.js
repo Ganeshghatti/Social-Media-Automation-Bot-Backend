@@ -1,7 +1,7 @@
 const transporter = require("../../config/email");
 const instantPostTemplate = require("./templates/instantPostTemplate");
 const path = require("path");
-require('dotenv').config()
+require('dotenv').config({ path: `.env.${process.env.NODE_ENV}` })
 const NotifyInstantPost = async (post) => {
   try {
     await transporter.sendMail({

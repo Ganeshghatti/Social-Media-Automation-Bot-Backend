@@ -1,5 +1,5 @@
 const nodemailer = require("nodemailer");
-require('dotenv').config()
+require('dotenv').config({ path: `.env.${process.env.NODE_ENV}` })
 
 const emailConfig = {
   host: process.env.SMTP_HOST,

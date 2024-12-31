@@ -1,6 +1,6 @@
 const TwitterApi = require("twitter-api-v2").TwitterApi;
 const User = require("../../models/User");
-require('dotenv').config()
+require('dotenv').config({ path: `.env.${process.env.NODE_ENV}` })
 
 exports.GetAuthUrl = async (req, res) => {
   try {

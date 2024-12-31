@@ -1,6 +1,6 @@
 const { initializeApp } = require("firebase/app");
 const { getStorage } = require("firebase/storage");
-require('dotenv').config()
+require('dotenv').config({ path: `.env.${process.env.NODE_ENV}` })
 
 const firebaseConfig = {
   apiKey: process.env.FIREBASE_API_KEY,
