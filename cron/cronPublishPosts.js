@@ -243,4 +243,4 @@ const cronPublishPosts = async () => {
 module.exports = { cronPublishPosts };
 
 // Run every 5 minutes
-cron.schedule("*/5 * * * *", cronPublishPosts);
+// cron.schedule("*/5 * * * *", cronPublishPosts);
