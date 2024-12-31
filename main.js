@@ -1,6 +1,7 @@
 const dotenv = require('dotenv');
 // Set default NODE_ENV if not set
 const env = process.env.NODE_ENV || 'development';
+console.log(process.env.NODE_ENV);
 switch (env) {
   case 'development':
     console.log('development');
