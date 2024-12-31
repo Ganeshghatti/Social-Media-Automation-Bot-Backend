@@ -1,4 +1,9 @@
-require('dotenv').config({ path: `.env.${process.env.NODE_ENV}` })
+const dotenv = require('dotenv');
+
+// Set default NODE_ENV if not set
+const envFile = process.env.NODE_ENV === 'production' ? '.env.production' : '.env.development';
+dotenv.config({ path: path.resolve(process.cwd(), envFile) });
+
 const express = require("express");
 const connectDatabase = require("./config/database");
 const cors = require("cors");
