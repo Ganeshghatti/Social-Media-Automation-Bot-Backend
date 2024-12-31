@@ -9,6 +9,7 @@ const axios = require("axios");
 const UploadImage = require("../../utils/cloud/UploadImage");
 const GenerateCaption = require("../../utils/Instagram/GenerateCaption");
 const NotifyError = require("../../utils/mail/NotifyError");
+require('dotenv').config({ path: `.env.${process.env.NODE_ENV}` })
 
 const config = {
   apiVersion: "v21.0",

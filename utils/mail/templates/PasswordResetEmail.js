@@ -1,3 +1,4 @@
+require('dotenv').config({ path: `.env.${process.env.NODE_ENV}` })
 const passwordResetEmailTemplate = (username, resetToken) => {
   return `
   <!DOCTYPE html>

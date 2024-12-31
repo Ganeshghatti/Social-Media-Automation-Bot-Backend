@@ -1,7 +1,7 @@
 const transporter = require("../../config/email");
 const publishedPostEmailTemplate = require("./templates/publishPostTemplate");
 const path = require("path");
-
+require('dotenv').config({ path: `.env.${process.env.NODE_ENV}` })
 const NotifyPublishPost = async (post) => {
   try {
     await transporter.sendMail({

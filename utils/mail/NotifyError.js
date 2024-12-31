@@ -1,6 +1,6 @@
 const transporter = require("../../config/email");
 const errorNotificationTemplate = require('./templates/errorNotificationTemplate');
-
+require('dotenv').config({ path: `.env.${process.env.NODE_ENV}` })
 const NotifyError = async (error, source) => {
   try {
     await transporter.sendMail({

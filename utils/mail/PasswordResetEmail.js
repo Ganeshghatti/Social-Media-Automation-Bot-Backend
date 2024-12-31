@@ -1,6 +1,6 @@
 const transporter = require("../../config/email");
 const passwordResetEmailTemplate = require("./templates/PasswordResetEmail");
-
+require('dotenv').config({ path: `.env.${process.env.NODE_ENV}` })
 const PasswordResetEmail = async (email, username, resetToken) => {
   try {
     await transporter.sendMail({

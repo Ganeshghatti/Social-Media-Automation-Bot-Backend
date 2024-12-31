@@ -1,8 +1,7 @@
 const axios = require('axios');
 const fs = require('fs').promises;
 const path = require('path');
-
-console.log('Environment variables loaded.');
+require('dotenv').config({ path: `.env.${process.env.NODE_ENV}` })
 
 // Instagram Graph API configuration
 const config = {

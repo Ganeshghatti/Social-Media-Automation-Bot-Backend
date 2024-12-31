@@ -6,6 +6,7 @@ const bcrypt = require("bcrypt");
 const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
 const PasswordResetEmail = require("../../utils/mail/PasswordResetEmail");
+require('dotenv').config({ path: `.env.${process.env.NODE_ENV}` })
 
 exports.Signup = async (req, res, next) => {
   const userdata = req.body;
