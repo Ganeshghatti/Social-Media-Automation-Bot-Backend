@@ -1,5 +1,6 @@
 const nodemailer = require("nodemailer");
-require('dotenv').config()
+const dotenv = require('dotenv');
+dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
 
 console.log(process.env.SMTP_HOST, process.env.SMTP_PORT, process.env.SMTP_USER, process.env.SMTP_PASSWORD);
 const emailConfig = {
