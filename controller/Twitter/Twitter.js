@@ -11,9 +11,8 @@ const NotifyCreatePost = require("../../utils/mail/NotifyCreatePost");
 const UploadImage = require("../../utils/cloud/UploadImage");
 const axios = require("axios");
 const DeleteImage = require("../../utils/cloud/DeleteImage");
-const dotenv = require("dotenv");
 const User = require("../../models/User");
-require('dotenv').config({ path: `.env.${process.env.NODE_ENV}` })
+require('dotenv').config()
 
 exports.InstantPost = async (req, res, next) => {
   try {

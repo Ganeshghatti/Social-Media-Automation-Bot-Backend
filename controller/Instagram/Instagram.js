@@ -10,7 +10,7 @@ const path = require("path");
 const axios = require("axios"); // Ensure axios is imported
 const UploadImage = require("../../utils/cloud/UploadImage");
 const DeleteImage = require("../../utils/cloud/DeleteImage");
-require('dotenv').config({ path: `.env.${process.env.NODE_ENV}` })
+require('dotenv').config()
 
 const config = {
   apiVersion: "v21.0",
