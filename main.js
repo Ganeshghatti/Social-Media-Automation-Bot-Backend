@@ -1,17 +1,9 @@
-const dotenv = require('dotenv');
+const path = require('path');
 // Set default NODE_ENV if not set
-const env = process.env.NODE_ENV || 'development';
+require('dotenv').config({ 
+  path: path.resolve(__dirname, process.env.NODE_ENV ? `.env.${process.env.NODE_ENV}` : '.env.development')
+});
 console.log(process.env.NODE_ENV);
-switch (env) {
-  case 'development':
-    console.log('development');
-    dotenv.config({ path: '.env.development' });
-    break;
-  case 'production':
-    console.log('production');
-    dotenv.config({ path: '.env.production' });
-    break;
-}
 
 const express = require("express");
 const connectDatabase = require("./config/database");
