@@ -1,5 +1,5 @@
 const path = require('path');
-// Set default NODE_ENV if not set
+
 require('dotenv').config({ 
   path: path.resolve(__dirname, process.env.NODE_ENV ? `.env.${process.env.NODE_ENV}` : '.env.development')
 });

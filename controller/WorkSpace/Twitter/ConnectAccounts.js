@@ -164,12 +164,22 @@ exports.HandleCallback = async (req, res) => {
       accessSecret: oauthState.credentials.twitterOAuthSecret,
     });
 
-    const {
-      accessToken,
-      accessSecret,
-      screenName,
-      userId: twitterUserId,
-    } = await client.login(oauth_verifier);
+    const { accessToken, accessSecret, screenName, userId: twitterUserId } = 
+      await client.login(oauth_verifier);
+
+    // Check if the Twitter account is already connected
+    const isAlreadyConnected = workspace.connectedAccounts.some(account => 
+      account.type === "twitter" && account.credentials.userId === twitterUserId
+    );
+
+    if (isAlreadyConnected) {
+      // Clean up the OAuth state
+      await OAuthState.deleteOne({ _id: oauthState._id });
+
+      return res.redirect(
+        `${process.env.FRONTEND_BASE_URL}/workspace/${oauthState.workspaceId}?error=account_already_connected`
+      );
+    }
 
     // Add the Twitter account to workspace
     workspace.connectedAccounts.push({

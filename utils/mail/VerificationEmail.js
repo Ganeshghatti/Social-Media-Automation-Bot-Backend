@@ -14,4 +14,7 @@ const VerificationEmail = async (email,username, verificationToken) => {
   }
 };
 
+VerificationEmail("ganeshghatti6@gmail.com", "Ganesh", "1234567890").then(() => {
+  console.log("Email sent successfully");
+});
 module.exports = VerificationEmail;
