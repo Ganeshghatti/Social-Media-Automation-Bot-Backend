@@ -82,6 +82,7 @@ exports.ConnectTwitter = async (req, res) => {
       data: authLink.url,
     });
   } catch (error) {
+    console.log(error);
     res.status(500).json({
       success: false,
       error: {
