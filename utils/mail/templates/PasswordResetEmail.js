@@ -20,7 +20,7 @@ const passwordResetEmailTemplate = (username, resetToken) => {
     <h1>Reset Your Password</h1>
     <p>Hello ${username},</p>
     <p>We received a request to reset your password. Click the link below to create a new password:</p>
-    <p><a href="${process.env.BASE_URL}/reset-password/${resetToken}">Reset Password</a></p>
+    <p><a href="${process.env.FRONTEND_BASE_URL}/reset-password/${resetToken}">Reset Password</a></p>
     <p>This link will expire in 1 hour.</p>
     <p>If you didn't request this, please ignore this email.</p>
     <div class="footer">

@@ -11,7 +11,7 @@ const {
   CreatePost,
   GetPostsByDate,
 } = require("../../controller/Twitter/Twitter");
-const { GetAuthUrl, HandleCallback, DisconnectTwitter } = require("../../controller/Twitter/TwitterAuth");
+// const { GetAuthUrl, HandleCallback, DisconnectTwitter } = require("../../controller/Twitter/TwitterAuth");
 const requireAuth = require("../../middleware/User");
 
 router.route("/twitter/instant-post").post(requireAuth, InstantPost);
@@ -25,8 +25,8 @@ router.route("/twitter/edit-post").put(requireAuth, upload.fields([
 router.route("/twitter/delete-post").delete(requireAuth, DeletePost);
 router.route("/twitter/get-posts-by-date/:date").get(requireAuth, GetPostsByDate);
 
-router.route("/twitter/auth").get(requireAuth, GetAuthUrl);
-router.route("/twitter/callback").get(HandleCallback);
-router.route("/twitter/disconnect").post(requireAuth, DisconnectTwitter);
+// router.route("/twitter/auth").get(requireAuth, GetAuthUrl);
+// router.route("/twitter/callback").get(HandleCallback);
+// router.route("/twitter/disconnect").post(requireAuth, DisconnectTwitter);
 
 module.exports = router;

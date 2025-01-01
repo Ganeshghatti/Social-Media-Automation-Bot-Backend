@@ -1,7 +1,7 @@
 const validator = require("validator");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const userModel = require("../../models/User");
+const User = require("../../models/User");
 require('dotenv').config()
 
 exports.AdminLogin = async (req, res, next) => {
@@ -20,7 +20,7 @@ exports.AdminLogin = async (req, res, next) => {
       });
     }
 
-    const admin = await userModel.findOne({ email, role: "admin" });
+    const admin = await User.findOne({ email, role: "admin" });
 
     if (!admin) {
       return res.status(401).json({

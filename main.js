@@ -13,6 +13,7 @@ const twitterRoutes = require("./routes/Twitter/Twitter");
 const linkedinRoutes = require("./routes/Linkedin/Linkedin");
 const instagramRoutes = require("./routes/Instagram/Instagram");
 const dashboardRoutes = require("./routes/Dashboard/Dashboard");
+const workspaceRoutes = require("./routes/WorkSpace/WorkSpace");
 const userRoutes = require("./routes/User/User");
 const moment = require("moment");
 // const { cronPublishPosts } = require("./cron/cronPublishPosts");
@@ -32,6 +33,7 @@ app.use(linkedinRoutes);
 app.use(instagramRoutes);
 app.use(dashboardRoutes);
 app.use(userRoutes);
+app.use(workspaceRoutes);
 
 // Root route
 app.get("/", (req, res) => {

@@ -1,4 +1,4 @@
-const userModel = require("../../models/User");
+const User = require("../../models/User");
 const VerificationEmail = require("../../utils/mail/VerificationEmail");
 const validator = require("validator");
 const moment = require("moment");
@@ -6,7 +6,7 @@ const bcrypt = require("bcrypt");
 const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
 const PasswordResetEmail = require("../../utils/mail/PasswordResetEmail");
-require('dotenv').config()
+require("dotenv").config();
 
 exports.Signup = async (req, res, next) => {
   const userdata = req.body;
@@ -33,7 +33,7 @@ exports.Signup = async (req, res, next) => {
       });
     }
 
-    const existingUser = await userModel.findOne({ email: userdata.email });
+    const existingUser = await User.findOne({ email: userdata.email });
 
     if (existingUser) {
       return res.status(400).json({
@@ -49,7 +49,7 @@ exports.Signup = async (req, res, next) => {
     const hash = await bcrypt.hash(userdata.password, salt);
     const verificationToken = crypto.randomBytes(32).toString("hex");
 
-    const user = new userModel({
+    const user = new User({
       username: userdata.username,
       email: userdata.email,
       phone: userdata.phone,
@@ -57,7 +57,7 @@ exports.Signup = async (req, res, next) => {
       status: "pending",
       verificationToken,
       verificationExpires: new Date(Date.now() + 24 * 60 * 60 * 1000),
-      createdAt: moment(),
+      createdAt: moment().format(),
     });
 
     const newUser = await user.save();
@@ -72,7 +72,8 @@ exports.Signup = async (req, res, next) => {
       res.status(500).json({
         success: false,
         error: {
-          message: "We encountered an issue sending the verification email. Please try again later.",
+          message:
+            "We encountered an issue sending the verification email. Please try again later.",
           code: 500,
         },
       });
@@ -81,7 +82,7 @@ exports.Signup = async (req, res, next) => {
     res.status(200).json({
       success: true,
       message:
-        "Registration successful! Please check your email to verify your account."
+        "Registration successful! Please check your email to verify your account.",
     });
   } catch (error) {
     res.status(500).json({
@@ -99,12 +100,12 @@ exports.VerifyEmail = async (req, res, next) => {
   try {
     const { token } = req.params;
 
-    const user = await userModel.findOne({
+    const user = await User.findOne({
       verificationToken: token,
       verificationExpires: { $gt: Date.now() },
       status: "pending",
     });
-    
+
     if (!user) {
       return res.status(400).json({
         success: false,
@@ -150,22 +151,12 @@ exports.Login = async (req, res) => {
       });
     }
 
-    const user = await userModel.findOne({ email });
+    const user = await User.findOne({ email });
     if (!user) {
       return res.status(401).json({
         success: false,
         error: {
           message: "Invalid email or password. Please try again.",
-          code: 401,
-        },
-      });
-    }
-
-    if (user.status !== "verified") {
-      return res.status(401).json({
-        success: false,
-        error: {
-          message: "Please verify your email before logging in.",
           code: 401,
         },
       });
@@ -178,6 +169,23 @@ exports.Login = async (req, res) => {
         error: {
           message: "Invalid email or password. Please try again.",
           code: 401,
+        },
+      });
+    }
+
+    if (user.status !== "verified") {
+      const verificationToken = crypto.randomBytes(32).toString("hex");
+      await VerificationEmail(user.email, user.username, verificationToken);
+      user.verificationToken = verificationToken;
+      user.verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      await user.save();
+      return res.status(400).json({
+        success: false,
+        error: {
+          message:
+            "Please verify your email before logging in.We have sent you a verification email to your registered email.",
+          code: 400,
+          detail: "User exists but not verified",
         },
       });
     }
@@ -220,7 +228,7 @@ exports.ForgotPassword = async (req, res) => {
       });
     }
 
-    const user = await userModel.findOne({ email });
+    const user = await User.findOne({ email });
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -242,7 +250,8 @@ exports.ForgotPassword = async (req, res) => {
       res.status(500).json({
         success: false,
         error: {
-          message: "We encountered an issue sending the password reset email. Please try again later.",
+          message:
+            "We encountered an issue sending the password reset email. Please try again later.",
           code: 500,
         },
       });
@@ -256,7 +265,8 @@ exports.ForgotPassword = async (req, res) => {
     res.status(500).json({
       success: false,
       error: {
-        message: "Failed to process your password reset request. Please try again.",
+        message:
+          "Failed to process your password reset request. Please try again.",
         code: 500,
         detail: error.message,
       },
@@ -272,13 +282,14 @@ exports.ResetPassword = async (req, res) => {
       return res.status(400).json({
         success: false,
         error: {
-          message: "Your new password must be strong and meet the required criteria.",
+          message:
+            "Your new password must be strong and meet the required criteria.",
           code: 400,
         },
       });
     }
 
-    const user = await userModel.findOne({
+    const user = await User.findOne({
       resetPasswordToken: token,
       resetPasswordExpires: { $gt: Date.now() },
     });

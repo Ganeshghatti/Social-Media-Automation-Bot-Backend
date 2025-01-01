@@ -26,6 +26,11 @@ const userSchema = new mongoose.Schema({
     type: Date,
     default: "",
   },
+  subscription: {
+    type: String,
+    default: "free",
+    enum: ["free", "premium"],
+  },
   role: {
     type: String,
     required: true,
@@ -36,15 +41,9 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: "",
   },
-  settings: {
-    description: {
-      type: String,
-      default: "",
-    },
-    keywords: {
-      type: [String],
-      default: [],
-    },
+  onboarding: {
+    type: Boolean,
+    default: false,
   },
   credentials: {
     twitter: {

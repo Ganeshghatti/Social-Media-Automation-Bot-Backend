@@ -19,7 +19,7 @@ const verificationEmailTemplate = (username, verificationToken) => {
     <h1>Verify Your Email</h1>
     <p>Hello ${username},</p>
     <p>Thank you for signing up for The Squirrel. Please click the link below to verify your email address.</p>
-    <p>Click <a href="${process.env.BASE_URL}/auth/verify/${verificationToken}">here</a> to verify your email.</p>
+    <p>Click <a href="${process.env.FRONTEND_BASE_URL}/auth/verify/${verificationToken}">here</a> to verify your email.</p>
     <p>This link will expire in 24 hours.</p>
     <p>If you did not request this verification, please ignore this email.</p>
     <p>Thank you for choosing The Squirrel!</p>
