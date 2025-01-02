@@ -2,8 +2,8 @@ const mongoose = require("mongoose");
 
 const twitterPostSchema = new mongoose.Schema(
   {
-    text: String,
-    img: String,
+    content: String,
+    media: [String],
     tobePublishedAt: Date,
     isPublished: Boolean,
     status: {
@@ -16,8 +16,18 @@ const twitterPostSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+    workspaceId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Workspace",
+      required: true,
+    },
+    createdAt: {
+      type: Date,
+    },
+    updatedAt: {
+      type: Date,
+    },
   },
-  { timestamps: true }
 );
 
 module.exports = mongoose.model("TwitterPost", twitterPostSchema);

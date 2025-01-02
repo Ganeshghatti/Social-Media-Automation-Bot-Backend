@@ -7,6 +7,7 @@ const { EditSettings, GetSettings } = require("../../controller/User/Settings");
 const requireAuth = require("../../middleware/User");
 const { Signup, Login, ForgotPassword, ResetPassword, VerifyEmail } = require("../../controller/User/Auth");
 const { OnBoarding } = require("../../controller/User/OnBoarding");
+const { Profile } = require("../../controller/User/Profile");
 
 router
   .route("/user/signup")
@@ -39,5 +40,7 @@ router
 router.route("/user/settings").get(requireAuth, GetSettings);
 
 router.route("/user/welcome").post(requireAuth, OnBoarding);
+
+router.route("/user/profile").get(requireAuth, Profile);
 
 module.exports = router;

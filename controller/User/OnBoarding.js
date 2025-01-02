@@ -20,7 +20,7 @@ exports.OnBoarding = async (req, res) => {
 
     const workspace = new WorkSpace({
       name: "default Workspace",
-      description: "",
+      about: "",
       userId: req.user._id,
       settings: {
         description: description || "",

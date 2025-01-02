@@ -27,7 +27,7 @@ function filterWorkspaceData(workspace) {
 exports.CreateWorkSpace = async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
-    const { name, description, settings } = req.body;
+    const { name, about, settings } = req.body;
     let iconUrl = "";
     let settingsObj;
 
@@ -35,18 +35,18 @@ exports.CreateWorkSpace = async (req, res) => {
       return res.status(400).json({
         success: false,
         error: {
-          message: "Keywords and description are required",
+          message: "About and keywords are required",
           code: 400,
         },
       });
     }
     settingsObj = JSON.parse(settings);
 
-    if (!name || !settingsObj.keywords || !settingsObj.description) {
+    if (!name || !settingsObj.keywords || !settingsObj.about) {
       return res.status(400).json({
         success: false,
         error: {
-          message: "Workspace name, keywords, and description are required",
+          message: "Workspace name, keywords, and about are required",
           code: 400,
         },
       });
@@ -80,10 +80,10 @@ exports.CreateWorkSpace = async (req, res) => {
     const workspace = new WorkSpace({
       userId: req.user._id,
       name,
-      description,
+      about,
       settings: {
         keywords: settingsObj.keywords,
-        description: settingsObj.description,
+        about: settingsObj.description,
       },
       icon: iconUrl,
       createdAt: moment().format(),
@@ -280,7 +280,7 @@ exports.EditWorkSpace = async (req, res) => {
     }
 
     if (name) workspace.name = name;
-    if (description !== undefined) workspace.description = description;
+    if (description !== undefined) workspace.about = description; // Changed from workspace.description to workspace.about
     if (settingsObj) {
       workspace.settings = {
         ...workspace.settings,

@@ -1,4 +1,6 @@
 const TwitterPost = require("../../models/TwitterPosts");
+const Workspace = require("../../models/WorkSpace");
+const User = require("../../models/User");
 const moment = require("moment");
 const { TwitterApi } = require("twitter-api-v2");
 const ShopifyScrape = require("../../scraping/ShopifyScrape");
@@ -11,99 +13,7 @@ const NotifyCreatePost = require("../../utils/mail/NotifyCreatePost");
 const UploadImage = require("../../utils/cloud/UploadImage");
 const axios = require("axios");
 const DeleteImage = require("../../utils/cloud/DeleteImage");
-const User = require("../../models/User");
 require('dotenv').config()
-
-exports.InstantPost = async (req, res, next) => {
-  try {
-    const user = await User.findById(req.user._id);
-    if (!user.credentials.twitter.isConnected) {
-      return res.status(400).json({
-        success: false,
-        error: {
-          message: "Please connect your Twitter account to post.",
-          code: 400
-        }
-      });
-    }
-
-    const userTwitterClient = new TwitterApi({
-      appKey: process.env.TWITTER_API_KEY,
-      appSecret: process.env.TWITTER_API_SECRET,
-      accessToken: user.credentials.twitter.accessToken,
-      accessSecret: user.credentials.twitter.accessSecret,
-    });
-
-    const content = await GeneratePostContent(user.settings);
-    if (!content) {
-      NotifyError("Error in Generate PostContent", "Instant Post");
-      return res.status(400).json({
-        success: false,
-        error: {
-          message: "Unable to generate post content. Please try again.",
-          code: 400
-        }
-      });
-    }
- 
-    const imagePrompt = await GenerateImagePrompt(content);
-
-    const tweetlimit = content.slice(0, 250);
-    const imageBuffer = await GenerateImage(imagePrompt);
-    if (!imageBuffer) {
-      NotifyError("Image generation failed", "Instant Post");
-      return res.status(400).json({
-        success: false,
-        error: {
-          message: "Unable to generate the image. Please try again.",
-          code: 400
-        }
-      });
-    }
-    
-    const fileName = `post-${Date.now()}.jpg`;
-    const imageUrl = await UploadImage(imageBuffer, fileName, "twitter");
-
-    const imageResponse = await axios.get(imageUrl, {
-      responseType: "arraybuffer",
-    });
-    const downloadedImageBuffer = imageResponse.data;
-
-    const mediaId = await userTwitterClient.v1.uploadMedia(downloadedImageBuffer, {
-      mimeType: "image/jpeg",
-    });
-
-    await userTwitterClient.v2.tweet({
-      text: tweetlimit,
-      media: { media_ids: [mediaId] },
-    });
-
-    const post = new TwitterPost({
-      text: tweetlimit,
-      tobePublishedAt: moment().utc().toDate(),
-      isPublished: true,
-      img: imageUrl,
-      status: "published",
-      userId: user._id
-    });
-
-    await post.save();
-    return res.status(200).json({
-      success: true,
-      message: "Post created successfully",
-    });
-  } catch (error) {
-    NotifyError(`Error in Instant Post: ${error.message}`, "Instant Post");
-    res.status(500).json({
-      success: false,
-      error: {
-        message: "Failed to create post. Please try again later.",
-        code: 500,
-        detail: error.message
-      }
-    });
-  }
-};
 
 exports.CreatePost = async (req, res) => {
   try {

@@ -10,7 +10,7 @@ const {
   DeleteWorkSpace,
   EditWorkSpace,
   GetWorkSpaceById,
-} = require("../../controller/WorkSpace/WorkSpace/WorkSpace");
+} = require("../../controller/WorkSpace/WorkSpace/ManageWorkSpace");
 const {
   ConnectTwitter,
   HandleCallback,

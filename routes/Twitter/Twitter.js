@@ -5,7 +5,6 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage });
 const {
   GetAllPosts,
-  InstantPost,
   EditPost,
   DeletePost,
   CreatePost,
@@ -14,7 +13,6 @@ const {
 // const { GetAuthUrl, HandleCallback, DisconnectTwitter } = require("../../controller/Twitter/TwitterAuth");
 const requireAuth = require("../../middleware/User");
 
-router.route("/twitter/instant-post").post(requireAuth, InstantPost);
 router.route("/twitter/create-post").post(requireAuth, upload.fields([
   { name: "img", maxCount: 1 },
 ]), CreatePost);

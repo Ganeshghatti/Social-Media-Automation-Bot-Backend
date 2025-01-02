@@ -5,7 +5,7 @@ const workSpaceSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  description: {
+  about: {
     type: String,
   },
   connectedAccounts: [
