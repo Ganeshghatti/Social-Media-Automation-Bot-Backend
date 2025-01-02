@@ -37,8 +37,6 @@ router
     EditSettings
   );
 
-router.route("/user/settings").get(requireAuth, GetSettings);
-
 router.route("/user/welcome").post(requireAuth, OnBoarding);
 
 router.route("/user/profile").get(requireAuth, Profile);

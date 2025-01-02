@@ -20,12 +20,6 @@ const moment = require("moment");
 // const { cronInstagramPosts } = require("./cron/Instagram/cronInstagramPosts");
 // const { cronTwitterPosts } = require("./cron/Twitter/cronTwitterPosts");
 // const { cronLinkedInPosts } = require("./cron/LinkedIn/cronLinkedInPosts");
-const putPresignedUrl = require("./utils/cloud/putPresignedUrl");
-async function main() {
-  const url = await putPresignedUrl(`/uploads/${Date.now()}.jpg`);
-  console.log(url);
-}
-// main();
 
 const app = express();
 

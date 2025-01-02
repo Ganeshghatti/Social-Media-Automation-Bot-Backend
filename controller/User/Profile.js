@@ -1,4 +1,5 @@
 const User = require("../../models/User");
+const getPresignedUrl = require("../../utils/cloud/getPresignedUrl");
 
 exports.Profile = async (req, res) => {
   try {
@@ -14,6 +15,13 @@ exports.Profile = async (req, res) => {
         },
       });
     }
+    if (user.profilepic) {
+      const key = user.profilepic.split(
+        `${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/`
+      )[1];
+      user.profilepic = await getPresignedUrl(key);
+    }
+
     res.json({
       success: true,
       message: "User profile fetched successfully",

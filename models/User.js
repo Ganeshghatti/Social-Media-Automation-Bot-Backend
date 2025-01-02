@@ -18,6 +18,10 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  about: {
+    type: String,
+    default: "",
+  },
   verificationToken: {
     type: String,
     default: "",
@@ -45,22 +49,15 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
-  credentials: {
-    twitter: {
-      twitterOAuthToken: String,
-      twitterOAuthSecret: String,
-      accessToken: String,
-      accessSecret: String,
-      userId: String,
-      username: String,
-      isConnected: Boolean
-    }
-  },
   status: {
     type: String,
     required: true,
     default: "pending",
     enum: ["pending", "verified", "rejected", "deactivated"],
+  },
+  notification: {
+    type: Boolean,
+    default: true,
   },
   createdAt: {
     type: String,

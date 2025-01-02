@@ -1,23 +1,17 @@
 const userModel = require("../../models/User");
-const UploadUserImg = require("../../utils/cloud/UploadUserImg");
-const DeleteUserImg = require("../../utils/cloud/DeleteUserImg");
+const putPresignedUrl = require("../../utils/cloud/putPresignedUrl");
+const DeleteS3Image = require("../../utils/cloud/DeleteS3Image");
+require("dotenv").config();
 
 exports.EditSettings = async (req, res) => {
   try {
-    const { keywords, description, username } = req.body;
-
-    const keywordsArray = JSON.parse(keywords);
-
-    if (!Array.isArray(keywordsArray)) {
-      return res.status(400).json({
-        success: false,
-        error: {
-          message: "Please provide keywords.",
-          code: 400,
-        },
-      });
-    }
-    const user = await userModel.findById(req.user._id);
+    const { username, notification, about, profilepic } = req.body;
+    console.log(username, notification, about, profilepic);
+    const user = await userModel
+      .findById(req.user._id)
+      .select(
+        "-password -verificationToken -verificationExpires -resetPasswordToken -resetPasswordExpires"
+      );
 
     if (!user) {
       return res.status(404).json({
@@ -25,68 +19,46 @@ exports.EditSettings = async (req, res) => {
         error: {
           message: "We couldn't find your account.",
           code: 404,
+          detail: "User not found",
         },
       });
     }
 
     // Handle profile picture upload
-    if (req.files && req.files.profilepic && req.files.profilepic.length > 0) {
+    let profilepicUrl;
+    let presignedUrl;
+    if (profilepic && profilepic.originalname) {
       if (user.profilepic) {
-        await DeleteUserImg(user.profilepic);
+        const key = user.profilepic.split(
+          `${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/`
+        )[1];
+        await DeleteS3Image(key);
       }
-      user.profilepic = await UploadUserImg(
-        req.files.profilepic[0].buffer,
-        req.files.profilepic[0].originalname,
-        req.user._id
-      );
+      const fileName = `user/${req.user._id}/profilepic/${Date.now()}-${
+        profilepic.originalname
+      }`;
+      presignedUrl = await putPresignedUrl(fileName);
+      profilepicUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileName}`;
     }
 
-    // Update other settings
-    user.settings.description = description;
-    user.settings.keywords = keywordsArray;
-    user.username = username;
+    console.log(profilepicUrl);
+
+    if (about !== undefined) user.about = about;
+    if (username !== undefined) user.username = username;
+    if (notification !== undefined) user.notification = notification;
+    if (profilepicUrl) user.profilepic = profilepicUrl;
 
     await user.save();
     res.status(200).json({
       success: true,
       message: "Your settings have been updated successfully.",
-    });
-  } catch (error) {
-    res
-      .status(500)
-      .json({
-        success: false,
-        error: {
-          message: "There was an issue updating your settings. Please try again.",
-          code: 500,
-          detail: error.message,
-        },
-      });
-  }
-};
-
-exports.GetSettings = async (req, res) => {
-  try {
-    const user = await userModel.findById(req.user._id).select("-password");
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        error: {
-          message: "We couldn't find your account.",
-          code: 404,
-        },
-      });
-    }
-    res.status(200).json({
-      success: true,
-      message: "Your settings have been retrieved successfully.",
-      data: user,
+      data: { user, presignedUrl },
     });
   } catch (error) {
     res.status(500).json({
       success: false,
       error: {
-        message: "Failed to retrieve your settings. Please try again later.",
+        message: "There was an issue updating your settings. Please try again.",
         code: 500,
         detail: error.message,
       },

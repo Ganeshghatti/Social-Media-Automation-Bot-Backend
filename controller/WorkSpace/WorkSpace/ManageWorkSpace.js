@@ -28,10 +28,9 @@ function filterWorkspaceData(workspace) {
 exports.CreateWorkSpace = async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
-    const { name, about, settings } = req.body;
+    const { name, about, settings, icon } = req.body;
     let iconUrl = "";
     let presignedUrl;
-    let settingsObj;
 
     if (!settings) {
       return res.status(400).json({
@@ -42,9 +41,8 @@ exports.CreateWorkSpace = async (req, res) => {
         },
       });
     }
-    settingsObj = JSON.parse(settings);
 
-    if (!name || !settingsObj.keywords || !settingsObj.description) {
+    if (!name || !settings.keywords || !settings.description) {
       return res.status(400).json({
         success: false,
         error: {
@@ -75,8 +73,8 @@ exports.CreateWorkSpace = async (req, res) => {
       name,
       about,
       settings: {
-        keywords: settingsObj.keywords,
-        description: settingsObj.description,
+        keywords: settings.keywords,
+        description: settings.description,
       },
       icon: "", // Placeholder for icon URL
       createdAt: moment().format(),
@@ -85,8 +83,8 @@ exports.CreateWorkSpace = async (req, res) => {
     const savedWorkspace = await workspace.save();
 
     // Handle icon upload with S3
-    if (req.file) {
-      const fileName = `workspace/${savedWorkspace._id}/icon/${Date.now()}-${req.file.originalname}`;
+    if (icon && icon.originalname) {
+      const fileName = `workspace/${savedWorkspace._id}/icon/${Date.now()}-${icon.originalname}`;
       presignedUrl = await putPresignedUrl(fileName);
       iconUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileName}`;
       
@@ -100,7 +98,8 @@ exports.CreateWorkSpace = async (req, res) => {
       message: "Workspace created successfully",
       data: {
         workspace: filterWorkspaceData(savedWorkspace),
-        presignedUrl: req.file ? presignedUrl : null,
+        iconUrl: iconUrl ? iconUrl : null,
+        presignedUrl: presignedUrl ? presignedUrl : null,
       },
     });
   } catch (error) {
@@ -163,6 +162,7 @@ exports.GetWorkSpaces = async (req, res) => {
     const workspacesWithPresignedUrls = await Promise.all(
       workspaces.map(async (workspace) => {
         const workspaceData = filterWorkspaceData(workspace);
+        console.log(workspace.icon);
         if (workspace.icon) {
           const iconKey = workspace.icon.split(`${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/`)[1];
           workspaceData.icon = await getPresignedUrl(iconKey);
@@ -256,11 +256,7 @@ exports.DeleteWorkSpace = async (req, res) => {
 exports.EditWorkSpace = async (req, res) => {
   try {
     const workspaceId = req.params.workSpaceId;
-    const { name, about, settings } = req.body;
-    let settingsObj;
-    if (settings) {
-      settingsObj = JSON.parse(settings);
-    }
+    const { name, about, settings, icon } = req.body;
 
     const workspace = await checkWorkspaceOwnership(workspaceId, req.user._id);
     if (!workspace) {
@@ -287,12 +283,12 @@ exports.EditWorkSpace = async (req, res) => {
     // Generate presigned URL for icon upload if file is present
     let iconUrl;
     let presignedUrl;
-    if (req.file) {
+    if (icon && icon.originalname) {
       if (workspace.icon) {
         const iconKey = workspace.icon.split(`${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/`)[1];
         await DeleteS3Image(iconKey);
       }
-      const fileName = `workspace/${workspaceId}/icon/${Date.now()}-${req.file.originalname}`;
+      const fileName = `workspace/${workspaceId}/icon/${Date.now()}-${icon.originalname}`;
       presignedUrl = await putPresignedUrl(fileName);
       // Return both the presigned URL and the final S3 URL
       iconUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileName}`;
@@ -301,10 +297,10 @@ exports.EditWorkSpace = async (req, res) => {
     if (name) workspace.name = name;
     if (about !== undefined) workspace.about = about;
     if (iconUrl) workspace.icon = iconUrl;
-    if (settingsObj) {
+    if (settings) {
       workspace.settings = {
         ...workspace.settings,
-        ...settingsObj,
+        ...settings,
       };
     }
 
@@ -315,8 +311,8 @@ exports.EditWorkSpace = async (req, res) => {
       message: "Workspace updated successfully",
       data: {
         workspace: filterWorkspaceData(workspace),
-        iconUrl: req.file ? iconUrl : null,
-        presignedUrl: req.file ? presignedUrl : null,
+        iconUrl: iconUrl ? iconUrl : null,
+        presignedUrl: presignedUrl ? presignedUrl : null,
       },
     });
   } catch (error) {
