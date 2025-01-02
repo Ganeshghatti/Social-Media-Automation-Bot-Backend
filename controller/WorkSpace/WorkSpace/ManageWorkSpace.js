@@ -28,6 +28,7 @@ exports.CreateWorkSpace = async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
     const { name, about, settings } = req.body;
+    console.log(name, about, settings);
     let iconUrl = "";
     let settingsObj;
 
@@ -35,18 +36,18 @@ exports.CreateWorkSpace = async (req, res) => {
       return res.status(400).json({
         success: false,
         error: {
-          message: "About and keywords are required",
+          message: "Description and keywords are required",
           code: 400,
         },
       });
     }
     settingsObj = JSON.parse(settings);
 
-    if (!name || !settingsObj.keywords || !settingsObj.about) {
+    if (!name || !settingsObj.keywords || !settingsObj.description) {
       return res.status(400).json({
         success: false,
         error: {
-          message: "Workspace name, keywords, and about are required",
+          message: "Workspace name, keywords, and description are required",
           code: 400,
         },
       });
@@ -83,7 +84,7 @@ exports.CreateWorkSpace = async (req, res) => {
       about,
       settings: {
         keywords: settingsObj.keywords,
-        about: settingsObj.description,
+        description: settingsObj.description,
       },
       icon: iconUrl,
       createdAt: moment().format(),
