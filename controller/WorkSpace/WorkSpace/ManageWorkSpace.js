@@ -4,9 +4,10 @@ const TwitterPost = require("../../../models/TwitterPosts");
 const LinkedinPost = require("../../../models/LinkedinPosts");
 const InstagramPost = require("../../../models/InstagramPosts");
 const checkWorkspaceOwnership = require("../../../utils/checkWorkspaceOwnership");
-const DeleteWorkSpaceImg = require("../../../utils/cloud/DeleteWorkSpaceImg");
-const UploadWorkSpaceImg = require("../../../utils/cloud/UploadWorkSpaceImg");
 const moment = require("moment");
+const putPresignedUrl = require("../../../utils/cloud/putPresignedUrl");
+const getPresignedUrl = require("../../../utils/cloud/getPresignedUrl");
+const DeleteS3Image = require("../../../utils/cloud/DeleteS3Image");
 
 // Helper function to filter out sensitive credentials
 function filterWorkspaceData(workspace) {
@@ -28,8 +29,8 @@ exports.CreateWorkSpace = async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
     const { name, about, settings } = req.body;
-    console.log(name, about, settings);
     let iconUrl = "";
+    let presignedUrl;
     let settingsObj;
 
     if (!settings) {
@@ -68,16 +69,7 @@ exports.CreateWorkSpace = async (req, res) => {
       }
     }
 
-    // Handle icon upload
-    if (req.file) {
-      const fileName = `workspace-icon-${Date.now()}-${req.file.originalname}`;
-      iconUrl = await UploadWorkSpaceImg(
-        req.file.buffer,
-        fileName,
-        "workspace-icons"
-      );
-    }
-
+    // Create the workspace first to get the workspace ID
     const workspace = new WorkSpace({
       userId: req.user._id,
       name,
@@ -86,16 +78,30 @@ exports.CreateWorkSpace = async (req, res) => {
         keywords: settingsObj.keywords,
         description: settingsObj.description,
       },
-      icon: iconUrl,
+      icon: "", // Placeholder for icon URL
       createdAt: moment().format(),
     });
 
-    await workspace.save();
+    const savedWorkspace = await workspace.save();
+
+    // Handle icon upload with S3
+    if (req.file) {
+      const fileName = `workspace/${savedWorkspace._id}/icon/${Date.now()}-${req.file.originalname}`;
+      presignedUrl = await putPresignedUrl(fileName);
+      iconUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileName}`;
+      
+      // Update the workspace with the icon URL
+      savedWorkspace.icon = iconUrl;
+      await savedWorkspace.save();
+    }
 
     res.json({
       success: true,
       message: "Workspace created successfully",
-      data: filterWorkspaceData(workspace),
+      data: {
+        workspace: filterWorkspaceData(savedWorkspace),
+        presignedUrl: req.file ? presignedUrl : null,
+      },
     });
   } catch (error) {
     res.status(500).json({
@@ -125,10 +131,17 @@ exports.GetWorkSpaceById = async (req, res) => {
       });
     }
 
+    // Generate presigned URL for the icon if it exists
+    let workspaceData = filterWorkspaceData(workspace);
+    if (workspace.icon) {
+      const iconKey = workspace.icon.split(`${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/`)[1];
+      workspaceData.icon = await getPresignedUrl(iconKey);
+    }
+
     res.json({
       success: true,
       message: "Workspace fetched successfully",
-      data: filterWorkspaceData(workspace),
+      data: workspaceData,
     });
   } catch (error) {
     res.status(500).json({
@@ -146,14 +159,22 @@ exports.GetWorkSpaces = async (req, res) => {
   try {
     const workspaces = await WorkSpace.find({ userId: req.user._id });
 
-    const filteredWorkspaces = workspaces.map((workspace) =>
-      filterWorkspaceData(workspace)
+    // Generate presigned URLs for all workspace icons
+    const workspacesWithPresignedUrls = await Promise.all(
+      workspaces.map(async (workspace) => {
+        const workspaceData = filterWorkspaceData(workspace);
+        if (workspace.icon) {
+          const iconKey = workspace.icon.split(`${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/`)[1];
+          workspaceData.icon = await getPresignedUrl(iconKey);
+        }
+        return workspaceData;
+      })
     );
 
     res.json({
       success: true,
       message: "Workspaces fetched successfully",
-      data: filteredWorkspaces,
+      data: workspacesWithPresignedUrls,
     });
   } catch (error) {
     res.status(500).json({
@@ -170,8 +191,8 @@ exports.GetWorkSpaces = async (req, res) => {
 exports.DeleteWorkSpace = async (req, res) => {
   try {
     const workspaceId = req.params.workSpaceId;
-
     const workspace = await checkWorkspaceOwnership(workspaceId, req.user._id);
+    
     if (!workspace) {
       return res.status(403).json({
         success: false,
@@ -184,7 +205,8 @@ exports.DeleteWorkSpace = async (req, res) => {
 
     // Delete workspace icon if exists
     if (workspace.icon) {
-      await DeleteWorkSpaceImg(workspace.icon);
+      const iconKey = workspace.icon.split(`${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/`)[1];
+      await DeleteS3Image(iconKey);
     }
 
     // Delete all associated posts and their images
@@ -194,18 +216,15 @@ exports.DeleteWorkSpace = async (req, res) => {
       InstagramPost.find({ workspaceId }),
     ]);
 
-    // Delete images from storage
+    // Delete images from S3
     const deleteImagePromises = [
-      ...twitterPosts
-        .filter((post) => post.img)
-        .map((post) => DeleteWorkSpaceImg(post.img)),
-      ...linkedinPosts
-        .filter((post) => post.img)
-        .map((post) => DeleteWorkSpaceImg(post.img)),
+      ...twitterPosts,
+      ...linkedinPosts,
       ...instagramPosts
-        .filter((post) => post.img)
-        .map((post) => DeleteWorkSpaceImg(post.img)),
-    ];
+    ].filter(post => post.img).map(post => {
+      const imgKey = post.img.split(`${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/`)[1];
+      return DeleteS3Image(imgKey);
+    });
 
     await Promise.all(deleteImagePromises);
 
@@ -216,7 +235,6 @@ exports.DeleteWorkSpace = async (req, res) => {
       InstagramPost.deleteMany({ workspaceId }),
     ]);
 
-    // Delete workspace
     await WorkSpace.findByIdAndDelete(workspaceId);
 
     res.json({
@@ -238,7 +256,7 @@ exports.DeleteWorkSpace = async (req, res) => {
 exports.EditWorkSpace = async (req, res) => {
   try {
     const workspaceId = req.params.workSpaceId;
-    const { name, description, settings } = req.body;
+    const { name, about, settings } = req.body;
     let settingsObj;
     if (settings) {
       settingsObj = JSON.parse(settings);
@@ -266,22 +284,23 @@ exports.EditWorkSpace = async (req, res) => {
       });
     }
 
-    // Handle icon update
+    // Generate presigned URL for icon upload if file is present
+    let iconUrl;
+    let presignedUrl;
     if (req.file) {
-      // Delete old icon if exists
       if (workspace.icon) {
-        await DeleteWorkSpaceImg(workspace.icon);
+        const iconKey = workspace.icon.split(`${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/`)[1];
+        await DeleteS3Image(iconKey);
       }
-      const fileName = `icon-${Date.now()}-${req.file.originalname}`;
-      workspace.icon = await UploadWorkSpaceImg(
-        req.file.buffer,
-        fileName,
-        "workspace-icons"
-      );
+      const fileName = `workspace/${workspaceId}/icon/${Date.now()}-${req.file.originalname}`;
+      presignedUrl = await putPresignedUrl(fileName);
+      // Return both the presigned URL and the final S3 URL
+      iconUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileName}`;
     }
 
     if (name) workspace.name = name;
-    if (description !== undefined) workspace.about = description; // Changed from workspace.description to workspace.about
+    if (about !== undefined) workspace.about = about;
+    if (iconUrl) workspace.icon = iconUrl;
     if (settingsObj) {
       workspace.settings = {
         ...workspace.settings,
@@ -294,7 +313,11 @@ exports.EditWorkSpace = async (req, res) => {
     res.json({
       success: true,
       message: "Workspace updated successfully",
-      data: filterWorkspaceData(workspace),
+      data: {
+        workspace: filterWorkspaceData(workspace),
+        iconUrl: req.file ? iconUrl : null,
+        presignedUrl: req.file ? presignedUrl : null,
+      },
     });
   } catch (error) {
     res.status(500).json({
