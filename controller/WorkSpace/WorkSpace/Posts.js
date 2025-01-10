@@ -7,6 +7,7 @@ const validateRequestedAccounts = require("../../../utils/validateRequestedAccou
 const publishTwitterPost = require("../../../utils/Twitter/PublishPost");
 const checkSubscriptionLimits = require("../../../utils/checkSubscriptionLimits");
 const moment = require("moment");
+const publishTwitterThread = require("../../../utils/Twitter/PublishThread");
 require("dotenv").config();
 
 exports.CreatePostPresignedUrl = async (req, res) => {
@@ -183,21 +184,19 @@ const processTwitterPostForCreation = async (post, workspace) => {
     let previousPost = null;
     const totalPosts = post.posts.length;
 
-    // Process each tweet in thread
-    for (let i = 0; i < totalPosts; i++) {
-      const threadPost = post.posts[i];
-      const mediaUrls = threadPost.media?.map((m) => m.mediaUrl) || [];
-      const currentPostId = new mongoose.Types.ObjectId();
+    if (post.publishnow) {
+      // Publish entire thread at once
+      const publishedTweetIds = await publishTwitterThread(
+        workspace,
+        post.posts,
+        post.accountId
+      );
 
-      if (post.publishnow) {
-        // Publish immediately
-        const tweetId = await publishTwitterPost(
-          workspace,
-          threadPost.content,
-          mediaUrls,
-          previousPost?.tweetId || null,
-          post.accountId
-        );
+      // Save all tweets to database
+      for (let i = 0; i < totalPosts; i++) {
+        const threadPost = post.posts[i];
+        const currentPostId = new mongoose.Types.ObjectId();
+        const mediaUrls = threadPost.media?.map((m) => m.mediaUrl) || [];
 
         const twitterPost = await TwitterPosts.create({
           _id: currentPostId,
@@ -211,7 +210,7 @@ const processTwitterPostForCreation = async (post, workspace) => {
           threadId: post._id,
           previousPost: previousPost?._id || null,
           threadPosition: i + 1,
-          tweetId: tweetId,
+          tweetId: publishedTweetIds[i],
           tobePublishedAt: moment().format(),
           createdAt: moment().format(),
         });
@@ -223,8 +222,14 @@ const processTwitterPostForCreation = async (post, workspace) => {
         }
 
         previousPost = twitterPost;
-      } else {
-        // Schedule for later
+      }
+    } else {
+      // Schedule for later
+      for (let i = 0; i < totalPosts; i++) {
+        const threadPost = post.posts[i];
+        const currentPostId = new mongoose.Types.ObjectId();
+        const mediaUrls = threadPost.media?.map((m) => m.mediaUrl) || [];
+
         const twitterPost = await TwitterPosts.create({
           _id: currentPostId,
           workspaceId: workspace._id,
@@ -271,6 +276,7 @@ const processTwitterPostForCreation = async (post, workspace) => {
         media: mediaUrls,
         isPublished: true,
         status: "published",
+        tobePublishedAt: moment().format(),
         threadId: tweetId,
         createdAt: moment().format(),
       });

@@ -14,7 +14,7 @@ const getMimeType = (filename) => {
     'mp4': 'video/mp4',
     'mov': 'video/quicktime'
   };
-  return mimeTypes[ext] || 'image/jpeg'; // default to jpeg if unknown
+  return mimeTypes[ext] || 'image/jpeg';
 };
 
 const publishTwitterPost = async (
