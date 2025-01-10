@@ -40,12 +40,12 @@ exports.ConnectTwitter = async (req, res) => {
       }
 
       const connectedAccountsCount = workspace.connectedAccounts.length;
-      if (connectedAccountsCount >= 1) {
+      if (connectedAccountsCount >= 2) {
         return res.status(403).json({
           success: false,
           error: {
             message:
-              "Free tier users can only connect one social media account",
+              "Free tier users can only connect two social media accounts",
             code: 403,
           },
         });
@@ -179,7 +179,6 @@ exports.HandleCallback = async (req, res) => {
         `${process.env.FRONTEND_BASE_URL}/workspace/${oauthState.workspaceId}?error=account_already_connected`
       );
     }
-
     // Add the Twitter account to workspace
     workspace.connectedAccounts.push({
       type: "twitter",

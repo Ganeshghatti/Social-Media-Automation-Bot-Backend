@@ -14,7 +14,10 @@ const workSpaceSchema = new mongoose.Schema({
         type: String,
         required: true,
       },
-      credentials: Object,
+      credentials: {
+        type: Object,
+        required: true,
+      },
       isConnected: {
         type: Boolean,
         default: false,
